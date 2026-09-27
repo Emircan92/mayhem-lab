@@ -1,10 +1,23 @@
 # Mayhem Lab
 
-Cut 1 provides a versioned, local data snapshot for champions, items, and standard ARAM Mayhem (`KIWI`) augments.
+Mayhem Lab is a local-first ARAM Mayhem game-state composer. Cut 2 adds a fast manual entry page over the versioned champion, item, and `KIWI` augment snapshot.
+
+## Run the app
+
+Node.js 20.9 or newer is required.
+
+```sh
+pnpm install
+pnpm dev
+```
+
+Open `http://localhost:3000`. Current game state is saved in browser `localStorage`; **New Game** clears it after confirmation.
+
+The two recommendation actions are intentionally non-functional until the recommendation cuts.
 
 ## Refresh the snapshot
 
-Node.js 20 or newer is the only requirement.
+Node.js 20.9 or newer is the only runtime requirement.
 
 ```sh
 npm run data:refresh
