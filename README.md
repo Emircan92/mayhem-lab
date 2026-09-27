@@ -13,7 +13,7 @@ pnpm dev
 
 Open `http://localhost:3000`. Current game state is saved in browser `localStorage`; **New Game** clears it after confirmation.
 
-The two recommendation actions are intentionally non-functional until the recommendation cuts.
+The two recommendation actions are intentionally non-functional until the recommendation cut. Expand **Recommendation snapshot** below the page to inspect the exact normalized JSON, deterministic facts, and warnings prepared for that future layer.
 
 ## Refresh the snapshot
 

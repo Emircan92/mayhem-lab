@@ -14,6 +14,10 @@ import {
   type PlayerStats,
   type SelectedAugment,
 } from "@/lib/game-state";
+import {
+  buildRecommendationSnapshot,
+  type RecommendationCatalog,
+} from "@/lib/preprocess-game-state";
 import { SearchSelect, type SearchOption } from "./SearchSelect";
 
 type GameStateComposerProps = {
@@ -125,6 +129,23 @@ export function GameStateComposer({ champions, augments, items, patch, generated
     }),
     [augmentById, championById, itemById],
   );
+  const recommendationCatalog = useMemo<RecommendationCatalog>(
+    () => ({ champions, augments, items }),
+    [augments, champions, items],
+  );
+  const snapshotResult = useMemo(() => {
+    try {
+      return {
+        snapshot: buildRecommendationSnapshot(state, recommendationCatalog, { patch, generatedAt }),
+        error: null,
+      };
+    } catch (error) {
+      return {
+        snapshot: null,
+        error: error instanceof Error ? error.message : "Snapshot normalization failed.",
+      };
+    }
+  }, [generatedAt, patch, recommendationCatalog, state]);
 
   useEffect(() => {
     setState(parseStoredGameState(window.localStorage.getItem(STORAGE_KEY), catalogIds));
@@ -200,7 +221,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   }
 
   function showComingSoon(action: string) {
-    setNotice(`${action} is ready for wiring, but recommendation logic is intentionally not implemented in Cut 2.`);
+    setNotice(`${action} has a normalized contract, but recommendation execution is intentionally deferred to Cut 4.`);
   }
 
   return (
@@ -485,6 +506,29 @@ export function GameStateComposer({ champions, augments, items, patch, generated
           </button>
         </div>
       </footer>
+
+      <details className="debug-panel">
+        <summary>
+          <span>Recommendation snapshot</span>
+          {snapshotResult.snapshot ? (
+            <small>
+              {snapshotResult.snapshot.facts.length} facts · {snapshotResult.snapshot.warnings.length} warnings
+            </small>
+          ) : (
+            <small>normalization error</small>
+          )}
+        </summary>
+        <p>Exact serializable payload prepared for the future recommendation layer.</p>
+        {snapshotResult.snapshot ? (
+          <pre data-testid="recommendation-snapshot">
+            {JSON.stringify(snapshotResult.snapshot, null, 2)}
+          </pre>
+        ) : (
+          <div className="snapshot-error" role="alert">
+            {snapshotResult.error}
+          </div>
+        )}
+      </details>
 
       <p className="data-footnote">
         Local snapshot {patch} · generated {new Date(generatedAt).toLocaleDateString("en-US")}

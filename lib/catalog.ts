@@ -35,5 +35,8 @@ export type Item = {
   purchasable: boolean;
   gold: { base: number; total: number; sell: number };
   tags: string[];
+  stats: Partial<Record<string, number>>;
+  from: number[];
+  into: number[];
   mapIds: number[];
 };
