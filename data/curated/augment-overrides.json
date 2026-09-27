@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "overrides": {
+    "EmpyreanPromise": {
+      "description": "Gain Heal and Shield Power and the Empyrean Promise summoner spell. Empyrean Promise teleports you to an ally and shields them after you land.",
+      "reason": "The Mayhem summary contains three unresolved numeric placeholders. This preserves the complete mechanic without guessing patch-sensitive values."
+    },
+    "MightyShield": {
+      "description": "Gaining a shield temporarily grants Adaptive Force. This effect has a cooldown.",
+      "reason": "The Mayhem summary contains three unresolved timing and magnitude placeholders."
+    },
+    "ARAM_DawnbringersResolve": {
+      "description": "Dropping below a health threshold heals you for a portion of your maximum Health over 3 seconds. The effect resets on death or after its cooldown.",
+      "reason": "The Mayhem summary contains three unresolved threshold, healing, and cooldown placeholders."
+    },
+    "UltimateAwakening": {
+      "description": "Gain Ultimate Ability Haste. After casting your Ultimate, refresh your basic abilities and temporarily gain basic Ability Haste. This effect has a cooldown.",
+      "reason": "The Mayhem summary contains four unresolved haste, duration, and cooldown placeholders."
+    },
+    "WardingWeapon": {
+      "description": "Striking an enemy champion with the affected ability temporarily grants Armor or Magic Resist based on that champion's damage type. This effect can stack.",
+      "reason": "The Mayhem summary contains three unresolved ability, resistance, and duration placeholders.",
+      "requiresAbilityContext": true
+    },
+    "LittleExtraHelp": {
+      "description": "During the affected ability's duration, gain Attack Range and Attack Speed.",
+      "reason": "The Mayhem summary contains three unresolved ability and stat placeholders.",
+      "requiresAbilityContext": true
+    },
+    "ARAM_SpinToWin": {
+      "description": "Your spinning abilities gain Ability Haste and deal increased damage, with a larger damage increase for Ultimates.",
+      "reason": "The Mayhem summary expands from an indirect string reference to three unresolved magnitude placeholders."
+    },
+    "Twinfire": {
+      "description": "Dealing ability damage fires additional missiles that deal magic damage. You also gain Critical Strike Chance.",
+      "reason": "The Mayhem summary expands from an indirect string reference to three unresolved missile and stat placeholders."
+    },
+    "Upgrade_SunderedSky": {
+      "description": "Upgrade Sundered Sky to reduce its per-target cooldown and heal you based on missing Health. Also gain Gold.",
+      "reason": "The Mayhem description expands from an indirect string reference to three unresolved cooldown, healing, and gold placeholders."
+    }
+  }
+}

@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "riotDataDragonPatch": "16.19.1",
+  "communityDragon": {
+    "patch": "16.19",
+    "source": "https://raw.communitydragon.org/16.19/",
+    "runtimeUsesLatest": false
+  },
+  "generatedAt": "2026-09-27T21:04:35.478Z",
+  "sources": {
+    "dataDragonVersions": "https://ddragon.leagueoflegends.com/api/versions.json",
+    "champions": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/champion.json",
+    "items": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/item.json",
+    "kiwiMembership": "https://raw.communitydragon.org/16.19/game/maps/modespecificdata/kiwi.bin.json",
+    "augmentMetadata": "https://raw.communitydragon.org/16.19/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json",
+    "mayhemStrings": "https://raw.communitydragon.org/16.19/game/en_us/data/menu/en_us/lol.stringtable.json"
+  },
+  "counts": {
+    "champions": 173,
+    "items": 866,
+    "augments": 223,
+    "curatedAugmentOverrides": 9
+  },
+  "validation": {
+    "valid": true,
+    "status": "passed-with-warnings",
+    "summary": {
+      "errorCount": 0,
+      "warningCount": 1,
+      "unresolvedDescriptionCount": 26,
+      "placeholderHeavyDescriptionCount": 0,
+      "cleanAiUsableDescriptionCount": 171,
+      "contextualUsableDescriptionCount": 26,
+      "usableWithMissingDetailCount": 26,
+      "unusableDescriptionCount": 0,
+      "curatedFallbackDescriptionCount": 9,
+      "resolvedTokenCount": 102,
+      "remainingUnresolvedTokenCount": 30
+    },
+    "checks": {
+      "everyKiwiAugmentResolved": true,
+      "augmentIdsUnique": true,
+      "augmentInternalNamesUnique": true,
+      "augmentDisplayNamesUnique": true,
+      "championIdsAndNamesValid": true,
+      "championIdsAndNamesUnique": true,
+      "itemIdsAndNamesValid": true,
+      "itemIdsUnique": true,
+      "curatedOverridesResolve": true,
+      "descriptionProblemsSurfaced": true,
+      "allDescriptionsAiUsable": true
+    },
+    "errors": [],
+    "warnings": [
+      "26 AI-usable augment descriptions retain unresolved numerical or detail tokens."
+    ],
+    "descriptionProblems": [
+      {
+        "id": 1180,
+        "internalName": "ARAM_BigBrain",
+        "name": "Big Brain",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@TotalShield@"
+        ]
+      },
+      {
+        "id": 1018,
+        "internalName": "ARAM_CourageoftheColossus",
+        "name": "Courage of the Colossus",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@TotalShield@"
+        ]
+      },
+      {
+        "id": 2010,
+        "internalName": "ARAM_DoubleTap",
+        "name": "Double Tap",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@Calc_Crit_Chance@"
+        ]
+      },
+      {
+        "id": 2127,
+        "internalName": "ForgedByTheMaster",
+        "name": "Forged By The Master",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@Calc_Damage_Amp@"
+        ]
+      },
+      {
+        "id": 2103,
+        "internalName": "ARAM_BangBang",
+        "name": "From Downtown",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@QuestRequirement@"
+        ]
+      },
+      {
+        "id": 1325,
+        "internalName": "GlassCannon",
+        "name": "Glass Cannon",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@TrueDamagePercSplit@"
+        ]
+      },
+      {
+        "id": 1048,
+        "internalName": "ARAM_JeweledGauntlet",
+        "name": "Jeweled Gauntlet",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@CritGranted@"
+        ]
+      },
+      {
+        "id": 2016,
+        "internalName": "ARAM_Juiced",
+        "name": "Juiced",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@Calc_Damage@",
+          "@Calc_Mana_Cost@"
+        ]
+      },
+      {
+        "id": 2055,
+        "internalName": "ARAM_Multishot",
+        "name": "Multishot",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": true,
+        "unresolvedTokens": [
+          "@QuestRequirement@"
+        ]
+      },
+      {
+        "id": 1061,
+        "internalName": "ARAM_OkBoomerang",
+        "name": "Ok Boomerang",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@Cooldown@"
+        ]
+      },
+      {
+        "id": 2046,
+        "internalName": "PoroCharge_Active",
+        "name": "Poro Stampede",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@QuestRequirement@"
+        ]
+      },
+      {
+        "id": 1324,
+        "internalName": "ARAM_ProteinShake",
+        "name": "Protein Shake",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@BonusHSPower@"
+        ]
+      },
+      {
+        "id": 2100,
+        "internalName": "ARAM_SpecializedRecursion",
+        "name": "Pursuit of Haste",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": true,
+        "unresolvedTokens": [
+          "@MaxAbilityHasteReward@",
+          "@QuestRequirement@"
+        ]
+      },
+      {
+        "id": 2116,
+        "internalName": "SpecializedEmpowerment",
+        "name": "Pursuit of Power",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": true,
+        "unresolvedTokens": [
+          "@QuestRequirement@"
+        ]
+      },
+      {
+        "id": 1170,
+        "internalName": "ARAM_ScopedWeapons",
+        "name": "Scoped Weapons",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@RangeIncrease@"
+        ]
+      },
+      {
+        "id": 1071,
+        "internalName": "ARAM_ScopierWeapons",
+        "name": "Scopier Weapons",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@RangeIncrease@"
+        ]
+      },
+      {
+        "id": 1115,
+        "internalName": "ARAM_ScopiestWeapons",
+        "name": "Scopiest Weapons",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@RangeIncrease@"
+        ]
+      },
+      {
+        "id": 1375,
+        "internalName": "SoulEater",
+        "name": "Soul Eater",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@StartingHPIfSecondAugmentTT@"
+        ]
+      },
+      {
+        "id": 2076,
+        "internalName": "TitansPulse",
+        "name": "Stay Resolute",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": true,
+        "unresolvedTokens": [
+          "@ARMR_Inc@"
+        ]
+      },
+      {
+        "id": 2108,
+        "internalName": "SupportMain",
+        "name": "Support Main",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@QuestRequirement@"
+        ]
+      },
+      {
+        "id": 2157,
+        "internalName": "Upgrade_DeathDance",
+        "name": "Upgrade Death's Dance",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@Gold@",
+          "@RangeMeleeSplitTT@"
+        ]
+      },
+      {
+        "id": 2140,
+        "internalName": "Upgrade_Ravenous",
+        "name": "Upgrade Ravenous Hydra",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@LifeStealTT@"
+        ]
+      },
+      {
+        "id": 1154,
+        "internalName": "ARAM_Quest_UrfsChampion",
+        "name": "Urf's Champion",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@QuestRequirement@"
+        ]
+      },
+      {
+        "id": 2132,
+        "internalName": "WarlockJuicebox",
+        "name": "Warlock Juicebox",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@Calc_Vamp@"
+        ]
+      },
+      {
+        "id": 1097,
+        "internalName": "ARAM_WitchfulThinking",
+        "name": "Witchful Thinking",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@AP@"
+        ]
+      },
+      {
+        "id": 2009,
+        "internalName": "ARAM_Zealot",
+        "name": "Zealot",
+        "status": "unresolved-tokens",
+        "quality": "usable-with-missing-detail",
+        "requiresAbilityContext": false,
+        "unresolvedTokens": [
+          "@Calc_AS@",
+          "@Calc_Crit_Chance@"
+        ]
+      }
+    ]
+  }
+}

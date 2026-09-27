@@ -1,0 +1,2385 @@
+{
+  "schemaVersion": 1,
+  "patch": "16.19.1",
+  "champions": [
+    {
+      "id": 266,
+      "key": "Aatrox",
+      "name": "Aatrox",
+      "title": "the Darkin Blade",
+      "tags": [
+        "Fighter"
+      ],
+      "image": {
+        "file": "Aatrox.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Aatrox.png"
+      }
+    },
+    {
+      "id": 103,
+      "key": "Ahri",
+      "name": "Ahri",
+      "title": "the Nine-Tailed Fox",
+      "tags": [
+        "Mage",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Ahri.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ahri.png"
+      }
+    },
+    {
+      "id": 84,
+      "key": "Akali",
+      "name": "Akali",
+      "title": "the Rogue Assassin",
+      "tags": [
+        "Assassin"
+      ],
+      "image": {
+        "file": "Akali.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Akali.png"
+      }
+    },
+    {
+      "id": 166,
+      "key": "Akshan",
+      "name": "Akshan",
+      "title": "the Rogue Sentinel",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Akshan.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Akshan.png"
+      }
+    },
+    {
+      "id": 12,
+      "key": "Alistar",
+      "name": "Alistar",
+      "title": "the Minotaur",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Alistar.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Alistar.png"
+      }
+    },
+    {
+      "id": 799,
+      "key": "Ambessa",
+      "name": "Ambessa",
+      "title": "Matriarch of War",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Ambessa.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ambessa.png"
+      }
+    },
+    {
+      "id": 32,
+      "key": "Amumu",
+      "name": "Amumu",
+      "title": "the Sad Mummy",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Amumu.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Amumu.png"
+      }
+    },
+    {
+      "id": 34,
+      "key": "Anivia",
+      "name": "Anivia",
+      "title": "the Cryophoenix",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Anivia.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Anivia.png"
+      }
+    },
+    {
+      "id": 1,
+      "key": "Annie",
+      "name": "Annie",
+      "title": "the Dark Child",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Annie.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Annie.png"
+      }
+    },
+    {
+      "id": 523,
+      "key": "Aphelios",
+      "name": "Aphelios",
+      "title": "the Weapon of the Faithful",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Aphelios.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Aphelios.png"
+      }
+    },
+    {
+      "id": 22,
+      "key": "Ashe",
+      "name": "Ashe",
+      "title": "the Frost Archer",
+      "tags": [
+        "Marksman",
+        "Support"
+      ],
+      "image": {
+        "file": "Ashe.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ashe.png"
+      }
+    },
+    {
+      "id": 136,
+      "key": "AurelionSol",
+      "name": "Aurelion Sol",
+      "title": "The Star Forger",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "AurelionSol.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/AurelionSol.png"
+      }
+    },
+    {
+      "id": 893,
+      "key": "Aurora",
+      "name": "Aurora",
+      "title": "the Witch Between Worlds",
+      "tags": [
+        "Mage",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Aurora.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Aurora.png"
+      }
+    },
+    {
+      "id": 268,
+      "key": "Azir",
+      "name": "Azir",
+      "title": "the Emperor of the Sands",
+      "tags": [
+        "Mage",
+        "Marksman"
+      ],
+      "image": {
+        "file": "Azir.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Azir.png"
+      }
+    },
+    {
+      "id": 432,
+      "key": "Bard",
+      "name": "Bard",
+      "title": "the Wandering Caretaker",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Bard.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Bard.png"
+      }
+    },
+    {
+      "id": 200,
+      "key": "Belveth",
+      "name": "Bel'Veth",
+      "title": "the Empress of the Void",
+      "tags": [
+        "Fighter"
+      ],
+      "image": {
+        "file": "Belveth.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Belveth.png"
+      }
+    },
+    {
+      "id": 53,
+      "key": "Blitzcrank",
+      "name": "Blitzcrank",
+      "title": "the Great Steam Golem",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Blitzcrank.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Blitzcrank.png"
+      }
+    },
+    {
+      "id": 63,
+      "key": "Brand",
+      "name": "Brand",
+      "title": "the Burning Vengeance",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Brand.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Brand.png"
+      }
+    },
+    {
+      "id": 201,
+      "key": "Braum",
+      "name": "Braum",
+      "title": "the Heart of the Freljord",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Braum.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Braum.png"
+      }
+    },
+    {
+      "id": 233,
+      "key": "Briar",
+      "name": "Briar",
+      "title": "the Restrained Hunger",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Briar.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Briar.png"
+      }
+    },
+    {
+      "id": 51,
+      "key": "Caitlyn",
+      "name": "Caitlyn",
+      "title": "the Sheriff of Piltover",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Caitlyn.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Caitlyn.png"
+      }
+    },
+    {
+      "id": 164,
+      "key": "Camille",
+      "name": "Camille",
+      "title": "the Steel Shadow",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Camille.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Camille.png"
+      }
+    },
+    {
+      "id": 69,
+      "key": "Cassiopeia",
+      "name": "Cassiopeia",
+      "title": "the Serpent's Embrace",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Cassiopeia.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Cassiopeia.png"
+      }
+    },
+    {
+      "id": 31,
+      "key": "Chogath",
+      "name": "Cho'Gath",
+      "title": "the Terror of the Void",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "image": {
+        "file": "Chogath.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Chogath.png"
+      }
+    },
+    {
+      "id": 42,
+      "key": "Corki",
+      "name": "Corki",
+      "title": "the Daring Bombardier",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Corki.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Corki.png"
+      }
+    },
+    {
+      "id": 122,
+      "key": "Darius",
+      "name": "Darius",
+      "title": "the Hand of Noxus",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Darius.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Darius.png"
+      }
+    },
+    {
+      "id": 131,
+      "key": "Diana",
+      "name": "Diana",
+      "title": "Scorn of the Moon",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Diana.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Diana.png"
+      }
+    },
+    {
+      "id": 36,
+      "key": "DrMundo",
+      "name": "Dr. Mundo",
+      "title": "the Madman of Zaun",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "image": {
+        "file": "DrMundo.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/DrMundo.png"
+      }
+    },
+    {
+      "id": 119,
+      "key": "Draven",
+      "name": "Draven",
+      "title": "the Glorious Executioner",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Draven.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Draven.png"
+      }
+    },
+    {
+      "id": 245,
+      "key": "Ekko",
+      "name": "Ekko",
+      "title": "the Boy Who Shattered Time",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Ekko.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ekko.png"
+      }
+    },
+    {
+      "id": 60,
+      "key": "Elise",
+      "name": "Elise",
+      "title": "the Spider Queen",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Elise.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Elise.png"
+      }
+    },
+    {
+      "id": 28,
+      "key": "Evelynn",
+      "name": "Evelynn",
+      "title": "Agony's Embrace",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Evelynn.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Evelynn.png"
+      }
+    },
+    {
+      "id": 81,
+      "key": "Ezreal",
+      "name": "Ezreal",
+      "title": "the Prodigal Explorer",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Ezreal.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ezreal.png"
+      }
+    },
+    {
+      "id": 9,
+      "key": "Fiddlesticks",
+      "name": "Fiddlesticks",
+      "title": "the Ancient Fear",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Fiddlesticks.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Fiddlesticks.png"
+      }
+    },
+    {
+      "id": 114,
+      "key": "Fiora",
+      "name": "Fiora",
+      "title": "the Grand Duelist",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Fiora.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Fiora.png"
+      }
+    },
+    {
+      "id": 105,
+      "key": "Fizz",
+      "name": "Fizz",
+      "title": "the Tidal Trickster",
+      "tags": [
+        "Assassin",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Fizz.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Fizz.png"
+      }
+    },
+    {
+      "id": 3,
+      "key": "Galio",
+      "name": "Galio",
+      "title": "the Colossus",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "image": {
+        "file": "Galio.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Galio.png"
+      }
+    },
+    {
+      "id": 41,
+      "key": "Gangplank",
+      "name": "Gangplank",
+      "title": "the Saltwater Scourge",
+      "tags": [
+        "Fighter"
+      ],
+      "image": {
+        "file": "Gangplank.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Gangplank.png"
+      }
+    },
+    {
+      "id": 86,
+      "key": "Garen",
+      "name": "Garen",
+      "title": "The Might of Demacia",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Garen.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Garen.png"
+      }
+    },
+    {
+      "id": 150,
+      "key": "Gnar",
+      "name": "Gnar",
+      "title": "the Missing Link",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Gnar.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Gnar.png"
+      }
+    },
+    {
+      "id": 79,
+      "key": "Gragas",
+      "name": "Gragas",
+      "title": "the Rabble Rouser",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "image": {
+        "file": "Gragas.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Gragas.png"
+      }
+    },
+    {
+      "id": 104,
+      "key": "Graves",
+      "name": "Graves",
+      "title": "the Outlaw",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Graves.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Graves.png"
+      }
+    },
+    {
+      "id": 887,
+      "key": "Gwen",
+      "name": "Gwen",
+      "title": "The Hallowed Seamstress",
+      "tags": [
+        "Fighter"
+      ],
+      "image": {
+        "file": "Gwen.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Gwen.png"
+      }
+    },
+    {
+      "id": 120,
+      "key": "Hecarim",
+      "name": "Hecarim",
+      "title": "the Shadow of War",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Hecarim.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Hecarim.png"
+      }
+    },
+    {
+      "id": 74,
+      "key": "Heimerdinger",
+      "name": "Heimerdinger",
+      "title": "the Revered Inventor",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Heimerdinger.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Heimerdinger.png"
+      }
+    },
+    {
+      "id": 910,
+      "key": "Hwei",
+      "name": "Hwei",
+      "title": "the Visionary",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Hwei.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Hwei.png"
+      }
+    },
+    {
+      "id": 420,
+      "key": "Illaoi",
+      "name": "Illaoi",
+      "title": "the Kraken Priestess",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Illaoi.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Illaoi.png"
+      }
+    },
+    {
+      "id": 39,
+      "key": "Irelia",
+      "name": "Irelia",
+      "title": "the Blade Dancer",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Irelia.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Irelia.png"
+      }
+    },
+    {
+      "id": 427,
+      "key": "Ivern",
+      "name": "Ivern",
+      "title": "the Green Father",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Ivern.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ivern.png"
+      }
+    },
+    {
+      "id": 40,
+      "key": "Janna",
+      "name": "Janna",
+      "title": "the Storm's Fury",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Janna.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Janna.png"
+      }
+    },
+    {
+      "id": 59,
+      "key": "JarvanIV",
+      "name": "Jarvan IV",
+      "title": "the Exemplar of Demacia",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "JarvanIV.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/JarvanIV.png"
+      }
+    },
+    {
+      "id": 24,
+      "key": "Jax",
+      "name": "Jax",
+      "title": "Grandmaster at Arms",
+      "tags": [
+        "Fighter"
+      ],
+      "image": {
+        "file": "Jax.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Jax.png"
+      }
+    },
+    {
+      "id": 126,
+      "key": "Jayce",
+      "name": "Jayce",
+      "title": "the Defender of Tomorrow",
+      "tags": [
+        "Fighter",
+        "Marksman"
+      ],
+      "image": {
+        "file": "Jayce.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Jayce.png"
+      }
+    },
+    {
+      "id": 202,
+      "key": "Jhin",
+      "name": "Jhin",
+      "title": "the Virtuoso",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Jhin.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Jhin.png"
+      }
+    },
+    {
+      "id": 222,
+      "key": "Jinx",
+      "name": "Jinx",
+      "title": "the Loose Cannon",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Jinx.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Jinx.png"
+      }
+    },
+    {
+      "id": 897,
+      "key": "KSante",
+      "name": "K'Sante",
+      "title": "the Pride of Nazumah",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "image": {
+        "file": "KSante.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/KSante.png"
+      }
+    },
+    {
+      "id": 145,
+      "key": "Kaisa",
+      "name": "Kai'Sa",
+      "title": "Daughter of the Void",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Kaisa.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kaisa.png"
+      }
+    },
+    {
+      "id": 429,
+      "key": "Kalista",
+      "name": "Kalista",
+      "title": "the Spear of Vengeance",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Kalista.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kalista.png"
+      }
+    },
+    {
+      "id": 43,
+      "key": "Karma",
+      "name": "Karma",
+      "title": "the Enlightened One",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Karma.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Karma.png"
+      }
+    },
+    {
+      "id": 30,
+      "key": "Karthus",
+      "name": "Karthus",
+      "title": "the Deathsinger",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Karthus.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Karthus.png"
+      }
+    },
+    {
+      "id": 38,
+      "key": "Kassadin",
+      "name": "Kassadin",
+      "title": "the Void Walker",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Kassadin.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kassadin.png"
+      }
+    },
+    {
+      "id": 55,
+      "key": "Katarina",
+      "name": "Katarina",
+      "title": "the Sinister Blade",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Katarina.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Katarina.png"
+      }
+    },
+    {
+      "id": 10,
+      "key": "Kayle",
+      "name": "Kayle",
+      "title": "the Righteous",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Kayle.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kayle.png"
+      }
+    },
+    {
+      "id": 141,
+      "key": "Kayn",
+      "name": "Kayn",
+      "title": "the Shadow Reaper",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Kayn.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kayn.png"
+      }
+    },
+    {
+      "id": 85,
+      "key": "Kennen",
+      "name": "Kennen",
+      "title": "the Heart of the Tempest",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Kennen.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kennen.png"
+      }
+    },
+    {
+      "id": 121,
+      "key": "Khazix",
+      "name": "Kha'Zix",
+      "title": "the Voidreaver",
+      "tags": [
+        "Assassin"
+      ],
+      "image": {
+        "file": "Khazix.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Khazix.png"
+      }
+    },
+    {
+      "id": 203,
+      "key": "Kindred",
+      "name": "Kindred",
+      "title": "The Eternal Hunters",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Kindred.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kindred.png"
+      }
+    },
+    {
+      "id": 240,
+      "key": "Kled",
+      "name": "Kled",
+      "title": "the Cantankerous Cavalier",
+      "tags": [
+        "Fighter"
+      ],
+      "image": {
+        "file": "Kled.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Kled.png"
+      }
+    },
+    {
+      "id": 96,
+      "key": "KogMaw",
+      "name": "Kog'Maw",
+      "title": "the Mouth of the Abyss",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "KogMaw.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/KogMaw.png"
+      }
+    },
+    {
+      "id": 7,
+      "key": "Leblanc",
+      "name": "LeBlanc",
+      "title": "the Deceiver",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Leblanc.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Leblanc.png"
+      }
+    },
+    {
+      "id": 64,
+      "key": "LeeSin",
+      "name": "Lee Sin",
+      "title": "the Blind Monk",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "LeeSin.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/LeeSin.png"
+      }
+    },
+    {
+      "id": 89,
+      "key": "Leona",
+      "name": "Leona",
+      "title": "the Radiant Dawn",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Leona.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Leona.png"
+      }
+    },
+    {
+      "id": 876,
+      "key": "Lillia",
+      "name": "Lillia",
+      "title": "the Bashful Bloom",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "image": {
+        "file": "Lillia.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Lillia.png"
+      }
+    },
+    {
+      "id": 127,
+      "key": "Lissandra",
+      "name": "Lissandra",
+      "title": "the Ice Witch",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Lissandra.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Lissandra.png"
+      }
+    },
+    {
+      "id": 805,
+      "key": "Locke",
+      "name": "Locke",
+      "title": "the Ashen Exorcist",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Locke.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Locke.png"
+      }
+    },
+    {
+      "id": 236,
+      "key": "Lucian",
+      "name": "Lucian",
+      "title": "the Purifier",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Lucian.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Lucian.png"
+      }
+    },
+    {
+      "id": 117,
+      "key": "Lulu",
+      "name": "Lulu",
+      "title": "the Fae Sorceress",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Lulu.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Lulu.png"
+      }
+    },
+    {
+      "id": 99,
+      "key": "Lux",
+      "name": "Lux",
+      "title": "the Lady of Luminosity",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Lux.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Lux.png"
+      }
+    },
+    {
+      "id": 54,
+      "key": "Malphite",
+      "name": "Malphite",
+      "title": "Shard of the Monolith",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "image": {
+        "file": "Malphite.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Malphite.png"
+      }
+    },
+    {
+      "id": 90,
+      "key": "Malzahar",
+      "name": "Malzahar",
+      "title": "the Prophet of the Void",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Malzahar.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Malzahar.png"
+      }
+    },
+    {
+      "id": 57,
+      "key": "Maokai",
+      "name": "Maokai",
+      "title": "the Twisted Treant",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Maokai.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Maokai.png"
+      }
+    },
+    {
+      "id": 11,
+      "key": "MasterYi",
+      "name": "Master Yi",
+      "title": "the Wuju Bladesman",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "MasterYi.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/MasterYi.png"
+      }
+    },
+    {
+      "id": 800,
+      "key": "Mel",
+      "name": "Mel",
+      "title": "the Soul's Reflection",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Mel.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Mel.png"
+      }
+    },
+    {
+      "id": 902,
+      "key": "Milio",
+      "name": "Milio",
+      "title": "The Gentle Flame",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Milio.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Milio.png"
+      }
+    },
+    {
+      "id": 21,
+      "key": "MissFortune",
+      "name": "Miss Fortune",
+      "title": "the Bounty Hunter",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "MissFortune.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/MissFortune.png"
+      }
+    },
+    {
+      "id": 82,
+      "key": "Mordekaiser",
+      "name": "Mordekaiser",
+      "title": "the Iron Revenant",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "image": {
+        "file": "Mordekaiser.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Mordekaiser.png"
+      }
+    },
+    {
+      "id": 25,
+      "key": "Morgana",
+      "name": "Morgana",
+      "title": "the Fallen",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Morgana.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Morgana.png"
+      }
+    },
+    {
+      "id": 950,
+      "key": "Naafiri",
+      "name": "Naafiri",
+      "title": "the Hound of a Hundred Bites",
+      "tags": [
+        "Assassin",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Naafiri.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Naafiri.png"
+      }
+    },
+    {
+      "id": 267,
+      "key": "Nami",
+      "name": "Nami",
+      "title": "the Tidecaller",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Nami.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Nami.png"
+      }
+    },
+    {
+      "id": 75,
+      "key": "Nasus",
+      "name": "Nasus",
+      "title": "the Curator of the Sands",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Nasus.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Nasus.png"
+      }
+    },
+    {
+      "id": 111,
+      "key": "Nautilus",
+      "name": "Nautilus",
+      "title": "the Titan of the Depths",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Nautilus.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Nautilus.png"
+      }
+    },
+    {
+      "id": 518,
+      "key": "Neeko",
+      "name": "Neeko",
+      "title": "the Curious Chameleon",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Neeko.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Neeko.png"
+      }
+    },
+    {
+      "id": 76,
+      "key": "Nidalee",
+      "name": "Nidalee",
+      "title": "the Bestial Huntress",
+      "tags": [
+        "Assassin",
+        "Mage"
+      ],
+      "image": {
+        "file": "Nidalee.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Nidalee.png"
+      }
+    },
+    {
+      "id": 895,
+      "key": "Nilah",
+      "name": "Nilah",
+      "title": "the Joy Unbound",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Nilah.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Nilah.png"
+      }
+    },
+    {
+      "id": 56,
+      "key": "Nocturne",
+      "name": "Nocturne",
+      "title": "the Eternal Nightmare",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Nocturne.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Nocturne.png"
+      }
+    },
+    {
+      "id": 20,
+      "key": "Nunu",
+      "name": "Nunu & Willump",
+      "title": "the Boy and His Yeti",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "image": {
+        "file": "Nunu.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Nunu.png"
+      }
+    },
+    {
+      "id": 2,
+      "key": "Olaf",
+      "name": "Olaf",
+      "title": "the Berserker",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Olaf.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Olaf.png"
+      }
+    },
+    {
+      "id": 61,
+      "key": "Orianna",
+      "name": "Orianna",
+      "title": "the Lady of Clockwork",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Orianna.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Orianna.png"
+      }
+    },
+    {
+      "id": 516,
+      "key": "Ornn",
+      "name": "Ornn",
+      "title": "The Fire below the Mountain",
+      "tags": [
+        "Tank"
+      ],
+      "image": {
+        "file": "Ornn.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ornn.png"
+      }
+    },
+    {
+      "id": 80,
+      "key": "Pantheon",
+      "name": "Pantheon",
+      "title": "the Unbreakable Spear",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Pantheon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Pantheon.png"
+      }
+    },
+    {
+      "id": 78,
+      "key": "Poppy",
+      "name": "Poppy",
+      "title": "Keeper of the Hammer",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Poppy.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Poppy.png"
+      }
+    },
+    {
+      "id": 555,
+      "key": "Pyke",
+      "name": "Pyke",
+      "title": "the Bloodharbor Ripper",
+      "tags": [
+        "Support",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Pyke.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Pyke.png"
+      }
+    },
+    {
+      "id": 246,
+      "key": "Qiyana",
+      "name": "Qiyana",
+      "title": "Empress of the Elements",
+      "tags": [
+        "Assassin"
+      ],
+      "image": {
+        "file": "Qiyana.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Qiyana.png"
+      }
+    },
+    {
+      "id": 133,
+      "key": "Quinn",
+      "name": "Quinn",
+      "title": "Demacia's Wings",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Quinn.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Quinn.png"
+      }
+    },
+    {
+      "id": 497,
+      "key": "Rakan",
+      "name": "Rakan",
+      "title": "The Charmer",
+      "tags": [
+        "Support"
+      ],
+      "image": {
+        "file": "Rakan.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Rakan.png"
+      }
+    },
+    {
+      "id": 33,
+      "key": "Rammus",
+      "name": "Rammus",
+      "title": "the Armordillo",
+      "tags": [
+        "Tank"
+      ],
+      "image": {
+        "file": "Rammus.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Rammus.png"
+      }
+    },
+    {
+      "id": 421,
+      "key": "RekSai",
+      "name": "Rek'Sai",
+      "title": "the Void Burrower",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "RekSai.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/RekSai.png"
+      }
+    },
+    {
+      "id": 526,
+      "key": "Rell",
+      "name": "Rell",
+      "title": "the Iron Maiden",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "Rell.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Rell.png"
+      }
+    },
+    {
+      "id": 888,
+      "key": "Renata",
+      "name": "Renata Glasc",
+      "title": "the Chem-Baroness",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Renata.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Renata.png"
+      }
+    },
+    {
+      "id": 58,
+      "key": "Renekton",
+      "name": "Renekton",
+      "title": "the Butcher of the Sands",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Renekton.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Renekton.png"
+      }
+    },
+    {
+      "id": 107,
+      "key": "Rengar",
+      "name": "Rengar",
+      "title": "the Pridestalker",
+      "tags": [
+        "Assassin",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Rengar.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Rengar.png"
+      }
+    },
+    {
+      "id": 92,
+      "key": "Riven",
+      "name": "Riven",
+      "title": "the Exile",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Riven.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Riven.png"
+      }
+    },
+    {
+      "id": 68,
+      "key": "Rumble",
+      "name": "Rumble",
+      "title": "the Mechanized Menace",
+      "tags": [
+        "Fighter",
+        "Mage"
+      ],
+      "image": {
+        "file": "Rumble.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Rumble.png"
+      }
+    },
+    {
+      "id": 13,
+      "key": "Ryze",
+      "name": "Ryze",
+      "title": "the Rune Mage",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Ryze.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ryze.png"
+      }
+    },
+    {
+      "id": 360,
+      "key": "Samira",
+      "name": "Samira",
+      "title": "the Desert Rose",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Samira.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Samira.png"
+      }
+    },
+    {
+      "id": 113,
+      "key": "Sejuani",
+      "name": "Sejuani",
+      "title": "Fury of the North",
+      "tags": [
+        "Tank"
+      ],
+      "image": {
+        "file": "Sejuani.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Sejuani.png"
+      }
+    },
+    {
+      "id": 235,
+      "key": "Senna",
+      "name": "Senna",
+      "title": "the Redeemer",
+      "tags": [
+        "Support",
+        "Marksman"
+      ],
+      "image": {
+        "file": "Senna.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Senna.png"
+      }
+    },
+    {
+      "id": 147,
+      "key": "Seraphine",
+      "name": "Seraphine",
+      "title": "the Starry-Eyed Songstress",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Seraphine.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Seraphine.png"
+      }
+    },
+    {
+      "id": 875,
+      "key": "Sett",
+      "name": "Sett",
+      "title": "the Boss",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Sett.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Sett.png"
+      }
+    },
+    {
+      "id": 35,
+      "key": "Shaco",
+      "name": "Shaco",
+      "title": "the Demon Jester",
+      "tags": [
+        "Assassin"
+      ],
+      "image": {
+        "file": "Shaco.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Shaco.png"
+      }
+    },
+    {
+      "id": 98,
+      "key": "Shen",
+      "name": "Shen",
+      "title": "the Eye of Twilight",
+      "tags": [
+        "Tank"
+      ],
+      "image": {
+        "file": "Shen.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Shen.png"
+      }
+    },
+    {
+      "id": 102,
+      "key": "Shyvana",
+      "name": "Shyvana",
+      "title": "the Half-Dragon",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Shyvana.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Shyvana.png"
+      }
+    },
+    {
+      "id": 27,
+      "key": "Singed",
+      "name": "Singed",
+      "title": "the Mad Chemist",
+      "tags": [
+        "Tank",
+        "Mage"
+      ],
+      "image": {
+        "file": "Singed.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Singed.png"
+      }
+    },
+    {
+      "id": 14,
+      "key": "Sion",
+      "name": "Sion",
+      "title": "The Undead Juggernaut",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Sion.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Sion.png"
+      }
+    },
+    {
+      "id": 15,
+      "key": "Sivir",
+      "name": "Sivir",
+      "title": "the Battle Mistress",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Sivir.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Sivir.png"
+      }
+    },
+    {
+      "id": 72,
+      "key": "Skarner",
+      "name": "Skarner",
+      "title": "the Primordial Sovereign",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Skarner.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Skarner.png"
+      }
+    },
+    {
+      "id": 901,
+      "key": "Smolder",
+      "name": "Smolder",
+      "title": "the Fiery Fledgling",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Smolder.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Smolder.png"
+      }
+    },
+    {
+      "id": 37,
+      "key": "Sona",
+      "name": "Sona",
+      "title": "Maven of the Strings",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Sona.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Sona.png"
+      }
+    },
+    {
+      "id": 16,
+      "key": "Soraka",
+      "name": "Soraka",
+      "title": "the Starchild",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Soraka.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Soraka.png"
+      }
+    },
+    {
+      "id": 50,
+      "key": "Swain",
+      "name": "Swain",
+      "title": "the Noxian Grand General",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Swain.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Swain.png"
+      }
+    },
+    {
+      "id": 517,
+      "key": "Sylas",
+      "name": "Sylas",
+      "title": "the Unshackled",
+      "tags": [
+        "Mage",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Sylas.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Sylas.png"
+      }
+    },
+    {
+      "id": 134,
+      "key": "Syndra",
+      "name": "Syndra",
+      "title": "the Dark Sovereign",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Syndra.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Syndra.png"
+      }
+    },
+    {
+      "id": 223,
+      "key": "TahmKench",
+      "name": "Tahm Kench",
+      "title": "The River King",
+      "tags": [
+        "Tank",
+        "Support"
+      ],
+      "image": {
+        "file": "TahmKench.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/TahmKench.png"
+      }
+    },
+    {
+      "id": 163,
+      "key": "Taliyah",
+      "name": "Taliyah",
+      "title": "the Stoneweaver",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Taliyah.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Taliyah.png"
+      }
+    },
+    {
+      "id": 91,
+      "key": "Talon",
+      "name": "Talon",
+      "title": "the Blade's Shadow",
+      "tags": [
+        "Assassin"
+      ],
+      "image": {
+        "file": "Talon.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Talon.png"
+      }
+    },
+    {
+      "id": 44,
+      "key": "Taric",
+      "name": "Taric",
+      "title": "the Shield of Valoran",
+      "tags": [
+        "Support",
+        "Tank"
+      ],
+      "image": {
+        "file": "Taric.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Taric.png"
+      }
+    },
+    {
+      "id": 17,
+      "key": "Teemo",
+      "name": "Teemo",
+      "title": "the Swift Scout",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Teemo.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Teemo.png"
+      }
+    },
+    {
+      "id": 412,
+      "key": "Thresh",
+      "name": "Thresh",
+      "title": "the Chain Warden",
+      "tags": [
+        "Support",
+        "Tank"
+      ],
+      "image": {
+        "file": "Thresh.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Thresh.png"
+      }
+    },
+    {
+      "id": 18,
+      "key": "Tristana",
+      "name": "Tristana",
+      "title": "the Yordle Gunner",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Tristana.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Tristana.png"
+      }
+    },
+    {
+      "id": 48,
+      "key": "Trundle",
+      "name": "Trundle",
+      "title": "the Troll King",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Trundle.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Trundle.png"
+      }
+    },
+    {
+      "id": 23,
+      "key": "Tryndamere",
+      "name": "Tryndamere",
+      "title": "the Barbarian King",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Tryndamere.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Tryndamere.png"
+      }
+    },
+    {
+      "id": 4,
+      "key": "TwistedFate",
+      "name": "Twisted Fate",
+      "title": "the Card Master",
+      "tags": [
+        "Mage",
+        "Marksman"
+      ],
+      "image": {
+        "file": "TwistedFate.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/TwistedFate.png"
+      }
+    },
+    {
+      "id": 29,
+      "key": "Twitch",
+      "name": "Twitch",
+      "title": "the Plague Rat",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Twitch.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Twitch.png"
+      }
+    },
+    {
+      "id": 77,
+      "key": "Udyr",
+      "name": "Udyr",
+      "title": "the Spirit Walker",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Udyr.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Udyr.png"
+      }
+    },
+    {
+      "id": 6,
+      "key": "Urgot",
+      "name": "Urgot",
+      "title": "the Dreadnought",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Urgot.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Urgot.png"
+      }
+    },
+    {
+      "id": 110,
+      "key": "Varus",
+      "name": "Varus",
+      "title": "the Arrow of Retribution",
+      "tags": [
+        "Marksman",
+        "Mage"
+      ],
+      "image": {
+        "file": "Varus.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Varus.png"
+      }
+    },
+    {
+      "id": 67,
+      "key": "Vayne",
+      "name": "Vayne",
+      "title": "the Night Hunter",
+      "tags": [
+        "Marksman",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Vayne.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Vayne.png"
+      }
+    },
+    {
+      "id": 45,
+      "key": "Veigar",
+      "name": "Veigar",
+      "title": "the Tiny Master of Evil",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Veigar.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Veigar.png"
+      }
+    },
+    {
+      "id": 161,
+      "key": "Velkoz",
+      "name": "Vel'Koz",
+      "title": "the Eye of the Void",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Velkoz.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Velkoz.png"
+      }
+    },
+    {
+      "id": 711,
+      "key": "Vex",
+      "name": "Vex",
+      "title": "the Gloomist",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Vex.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Vex.png"
+      }
+    },
+    {
+      "id": 254,
+      "key": "Vi",
+      "name": "Vi",
+      "title": "the Piltover Enforcer",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Vi.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Vi.png"
+      }
+    },
+    {
+      "id": 234,
+      "key": "Viego",
+      "name": "Viego",
+      "title": "The Ruined King",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Viego.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Viego.png"
+      }
+    },
+    {
+      "id": 112,
+      "key": "Viktor",
+      "name": "Viktor",
+      "title": "the Herald of the Arcane",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Viktor.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Viktor.png"
+      }
+    },
+    {
+      "id": 8,
+      "key": "Vladimir",
+      "name": "Vladimir",
+      "title": "the Crimson Reaper",
+      "tags": [
+        "Mage",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Vladimir.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Vladimir.png"
+      }
+    },
+    {
+      "id": 106,
+      "key": "Volibear",
+      "name": "Volibear",
+      "title": "the Relentless Storm",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Volibear.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Volibear.png"
+      }
+    },
+    {
+      "id": 19,
+      "key": "Warwick",
+      "name": "Warwick",
+      "title": "the Uncaged Wrath of Zaun",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Warwick.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Warwick.png"
+      }
+    },
+    {
+      "id": 62,
+      "key": "MonkeyKing",
+      "name": "Wukong",
+      "title": "the Monkey King",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "MonkeyKing.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/MonkeyKing.png"
+      }
+    },
+    {
+      "id": 498,
+      "key": "Xayah",
+      "name": "Xayah",
+      "title": "the Rebel",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Xayah.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Xayah.png"
+      }
+    },
+    {
+      "id": 101,
+      "key": "Xerath",
+      "name": "Xerath",
+      "title": "the Magus Ascendant",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Xerath.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Xerath.png"
+      }
+    },
+    {
+      "id": 5,
+      "key": "XinZhao",
+      "name": "Xin Zhao",
+      "title": "the Seneschal of Demacia",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "XinZhao.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/XinZhao.png"
+      }
+    },
+    {
+      "id": 157,
+      "key": "Yasuo",
+      "name": "Yasuo",
+      "title": "the Unforgiven",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Yasuo.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Yasuo.png"
+      }
+    },
+    {
+      "id": 777,
+      "key": "Yone",
+      "name": "Yone",
+      "title": "the Unforgotten",
+      "tags": [
+        "Fighter",
+        "Assassin"
+      ],
+      "image": {
+        "file": "Yone.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Yone.png"
+      }
+    },
+    {
+      "id": 83,
+      "key": "Yorick",
+      "name": "Yorick",
+      "title": "Shepherd of Souls",
+      "tags": [
+        "Fighter",
+        "Tank"
+      ],
+      "image": {
+        "file": "Yorick.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Yorick.png"
+      }
+    },
+    {
+      "id": 804,
+      "key": "Yunara",
+      "name": "Yunara",
+      "title": "the Unbroken Faith",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Yunara.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Yunara.png"
+      }
+    },
+    {
+      "id": 350,
+      "key": "Yuumi",
+      "name": "Yuumi",
+      "title": "the Magical Cat",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Yuumi.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Yuumi.png"
+      }
+    },
+    {
+      "id": 904,
+      "key": "Zaahen",
+      "name": "Zaahen",
+      "title": "The Unsundered",
+      "tags": [
+        "Fighter"
+      ],
+      "image": {
+        "file": "Zaahen.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Zaahen.png"
+      }
+    },
+    {
+      "id": 154,
+      "key": "Zac",
+      "name": "Zac",
+      "title": "the Secret Weapon",
+      "tags": [
+        "Tank",
+        "Fighter"
+      ],
+      "image": {
+        "file": "Zac.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Zac.png"
+      }
+    },
+    {
+      "id": 238,
+      "key": "Zed",
+      "name": "Zed",
+      "title": "the Master of Shadows",
+      "tags": [
+        "Assassin"
+      ],
+      "image": {
+        "file": "Zed.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Zed.png"
+      }
+    },
+    {
+      "id": 221,
+      "key": "Zeri",
+      "name": "Zeri",
+      "title": "The Spark of Zaun",
+      "tags": [
+        "Marksman"
+      ],
+      "image": {
+        "file": "Zeri.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Zeri.png"
+      }
+    },
+    {
+      "id": 115,
+      "key": "Ziggs",
+      "name": "Ziggs",
+      "title": "the Hexplosives Expert",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Ziggs.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Ziggs.png"
+      }
+    },
+    {
+      "id": 26,
+      "key": "Zilean",
+      "name": "Zilean",
+      "title": "the Chronokeeper",
+      "tags": [
+        "Support",
+        "Mage"
+      ],
+      "image": {
+        "file": "Zilean.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Zilean.png"
+      }
+    },
+    {
+      "id": 142,
+      "key": "Zoe",
+      "name": "Zoe",
+      "title": "the Aspect of Twilight",
+      "tags": [
+        "Mage"
+      ],
+      "image": {
+        "file": "Zoe.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Zoe.png"
+      }
+    },
+    {
+      "id": 143,
+      "key": "Zyra",
+      "name": "Zyra",
+      "title": "Rise of the Thorns",
+      "tags": [
+        "Mage",
+        "Support"
+      ],
+      "image": {
+        "file": "Zyra.png",
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/img/champion/Zyra.png"
+      }
+    }
+  ]
+}

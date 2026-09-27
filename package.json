@@ -1,0 +1,12 @@
+{
+  "name": "mayhem-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "data:refresh": "node scripts/refresh-data.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
