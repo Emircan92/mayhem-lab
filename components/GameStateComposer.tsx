@@ -18,6 +18,11 @@ import {
   buildRecommendationSnapshot,
   type RecommendationCatalog,
 } from "@/lib/preprocess-game-state";
+import type {
+  RecommendationApiResponse,
+  RecommendationApiSuccess,
+} from "@/lib/recommendation/api-contract";
+import type { RecommendationResponse } from "@/lib/recommendation-contract";
 import { SearchSelect, type SearchOption } from "./SearchSelect";
 
 type GameStateComposerProps = {
@@ -45,6 +50,12 @@ const STAT_FIELDS: Array<{
   { key: "abilityHaste", label: "Ability haste", placeholder: "e.g. 80" },
   { key: "health", label: "Health", placeholder: "e.g. 3500" },
 ];
+
+type RecommendationUiState =
+  | { status: "idle" }
+  | { status: "loading"; kind: "augment" | "item" }
+  | { status: "success"; recommendation: RecommendationResponse }
+  | { status: "error"; kind: "augment" | "item"; message: string };
 
 function AbilityContextPicker({
   value,
@@ -117,6 +128,8 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   const [state, setState] = useState<ManualGameState>(createEmptyGameState);
   const [hydrated, setHydrated] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [recommendationUi, setRecommendationUi] = useState<RecommendationUiState>({ status: "idle" });
+  const [recommendationDebug, setRecommendationDebug] = useState<RecommendationApiSuccess["debug"] | null>(null);
 
   const championById = useMemo(() => new Map(champions.map((entry) => [entry.id, entry])), [champions]);
   const augmentById = useMemo(() => new Map(augments.map((entry) => [entry.id, entry])), [augments]);
@@ -217,11 +230,34 @@ export function GameStateComposer({ champions, augments, items, patch, generated
     if (hasGameState(state) && !window.confirm("Start a new game and clear the current state?")) return;
     window.localStorage.removeItem(STORAGE_KEY);
     setState(createEmptyGameState());
+    setRecommendationUi({ status: "idle" });
+    setRecommendationDebug(null);
     setNotice("New game started. Current selections were cleared.");
   }
 
-  function showComingSoon(action: string) {
-    setNotice(`${action} has a normalized contract, but recommendation execution is intentionally deferred to Cut 4.`);
+  async function requestRecommendation(kind: "augment" | "item") {
+    setRecommendationUi({ status: "loading", kind });
+    try {
+      const response = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, state }),
+      });
+      const payload = (await response.json()) as RecommendationApiResponse;
+      if (!response.ok || !payload.ok) {
+        const message = payload.ok ? "Recommendation failed." : payload.error.message;
+        setRecommendationUi({ status: "error", kind, message });
+        return;
+      }
+      setRecommendationDebug(payload.debug);
+      setRecommendationUi({ status: "success", recommendation: payload.recommendation });
+    } catch {
+      setRecommendationUi({
+        status: "error",
+        kind,
+        message: "Could not reach the local recommendation endpoint. Check the dev server and retry.",
+      });
+    }
   }
 
   return (
@@ -495,21 +531,83 @@ export function GameStateComposer({ champions, augments, items, patch, generated
       <footer className="action-bar">
         <div>
           <strong>State ready when you are.</strong>
-          <span>Recommendations are intentionally deferred to the next cuts.</span>
+          <span>The model is constrained to the displayed offers or the filtered completed-item catalog.</span>
         </div>
         <div className="action-buttons">
-          <button type="button" onClick={() => showComingSoon("Choose Augment")}>
-            Choose Augment
+          <button
+            type="button"
+            disabled={recommendationUi.status === "loading"}
+            onClick={() => requestRecommendation("augment")}
+          >
+            {recommendationUi.status === "loading" && recommendationUi.kind === "augment"
+              ? "Choosing…"
+              : "Choose Augment"}
           </button>
-          <button type="button" onClick={() => showComingSoon("Recommend Next Item")}>
-            Recommend Next Item
+          <button
+            type="button"
+            disabled={recommendationUi.status === "loading"}
+            onClick={() => requestRecommendation("item")}
+          >
+            {recommendationUi.status === "loading" && recommendationUi.kind === "item"
+              ? "Thinking…"
+              : "Recommend Next Item"}
           </button>
         </div>
       </footer>
 
+      {recommendationUi.status === "error" ? (
+        <section className="recommendation-error" role="alert">
+          <div>
+            <strong>Recommendation unavailable</strong>
+            <p>{recommendationUi.message}</p>
+          </div>
+          <button type="button" onClick={() => requestRecommendation(recommendationUi.kind)}>
+            Retry
+          </button>
+        </section>
+      ) : null}
+
+      {recommendationUi.status === "success" ? (
+        <section className="recommendation-panel" aria-live="polite">
+          <div className="recommendation-title">
+            <div>
+              <span>{recommendationUi.recommendation.kind === "augment" ? "AUGMENT PICK" : "NEXT COMPLETED ITEM"}</span>
+              <h2>{recommendationUi.recommendation.primary.name}</h2>
+            </div>
+            <b className={`confidence confidence-${recommendationUi.recommendation.confidence}`}>
+              {recommendationUi.recommendation.confidence} confidence
+            </b>
+          </div>
+          <p className="primary-reason">{recommendationUi.recommendation.primary.reason}</p>
+          {recommendationUi.recommendation.alternatives.length ? (
+            <div className="recommendation-alternatives">
+              {recommendationUi.recommendation.alternatives.map((alternative) => (
+                <article key={alternative.id}>
+                  <strong>{alternative.name}</strong>
+                  <p>{alternative.reason}</p>
+                  {alternative.preferWhen ? <small>Prefer when: {alternative.preferWhen}</small> : null}
+                </article>
+              ))}
+            </div>
+          ) : null}
+          {recommendationUi.recommendation.buildDirection ? (
+            <p className="build-direction">
+              <strong>Direction:</strong> {recommendationUi.recommendation.buildDirection}
+            </p>
+          ) : null}
+          {recommendationUi.recommendation.warnings.length ? (
+            <ul className="recommendation-warnings">
+              {recommendationUi.recommendation.warnings.map((warning, index) => (
+                <li key={`${warning}-${index}`}>{warning}</li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+
       <details className="debug-panel">
         <summary>
-          <span>Recommendation snapshot</span>
+          <span>Recommendation debug</span>
           {snapshotResult.snapshot ? (
             <small>
               {snapshotResult.snapshot.facts.length} facts · {snapshotResult.snapshot.warnings.length} warnings
@@ -518,11 +616,32 @@ export function GameStateComposer({ champions, augments, items, patch, generated
             <small>normalization error</small>
           )}
         </summary>
-        <p>Exact serializable payload prepared for the future recommendation layer.</p>
+        <p>Normalized state, exact candidate request, and validated structured result. Provider credentials are never included.</p>
         {snapshotResult.snapshot ? (
-          <pre data-testid="recommendation-snapshot">
-            {JSON.stringify(snapshotResult.snapshot, null, 2)}
-          </pre>
+          <div className="debug-payloads">
+            <h3>Current normalized snapshot</h3>
+            <pre data-testid="recommendation-snapshot">
+              {JSON.stringify(snapshotResult.snapshot, null, 2)}
+            </pre>
+            {recommendationDebug ? (
+              <>
+                <h3>
+                  Last model request · {recommendationDebug.provider.provider}/{recommendationDebug.provider.model}
+                </h3>
+                <pre data-testid="recommendation-request">
+                  {JSON.stringify(recommendationDebug.request, null, 2)}
+                </pre>
+              </>
+            ) : null}
+            {recommendationUi.status === "success" ? (
+              <>
+                <h3>Validated structured recommendation</h3>
+                <pre data-testid="recommendation-response">
+                  {JSON.stringify(recommendationUi.recommendation, null, 2)}
+                </pre>
+              </>
+            ) : null}
+          </div>
         ) : (
           <div className="snapshot-error" role="alert">
             {snapshotResult.error}

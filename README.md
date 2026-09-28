@@ -1,6 +1,6 @@
 # Mayhem Lab
 
-Mayhem Lab is a local-first ARAM Mayhem game-state composer. Cut 2 adds a fast manual entry page over the versioned champion, item, and `KIWI` augment snapshot.
+Mayhem Lab is a local-first ARAM Mayhem game-state composer with grounded augment and completed-item recommendations over the versioned champion, item, and `KIWI` augment snapshot.
 
 ## Run the app
 
@@ -8,12 +8,15 @@ Node.js 20.9 or newer is required.
 
 ```sh
 pnpm install
+cp .env.example .env.local
 pnpm dev
 ```
 
-Open `http://localhost:3000`. Current game state is saved in browser `localStorage`; **New Game** clears it after confirmation.
+Set `OPENAI_API_KEY` and `OPENAI_MODEL` in `.env.local`, then open `http://localhost:3000`. Current game state is saved in browser `localStorage`; **New Game** clears it after confirmation.
 
-The two recommendation actions are intentionally non-functional until the recommendation cut. Expand **Recommendation snapshot** below the page to inspect the exact normalized JSON, deterministic facts, and warnings prepared for that future layer.
+For local UI testing without a paid model call, set `MAYHEM_RECOMMENDATION_PROVIDER=fake`. The fake always chooses the first valid candidate and is explicitly labeled as non-strategic.
+
+Expand **Recommendation debug** below the page to inspect the normalized snapshot, the exact candidate-constrained request, provider/model label, and locally validated structured response. Provider credentials are server-only and are never included in this panel.
 
 ## Refresh the snapshot
 

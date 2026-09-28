@@ -43,7 +43,7 @@ function normalizeChampion(champion: Champion): NormalizedChampion {
   };
 }
 
-function normalizeItem(item: Item): NormalizedItem {
+export function normalizeCatalogItem(item: Item): NormalizedItem {
   return {
     id: item.id,
     name: item.name,
@@ -253,7 +253,7 @@ export function buildRecommendationSnapshot(
   const items = state.itemIds.map((itemId) => {
     const item = itemById.get(itemId);
     if (!item) throw new SnapshotNormalizationError(`Unknown item ID ${itemId}.`);
-    return normalizeItem(item);
+    return normalizeCatalogItem(item);
   });
   const itemCounts = countItemIds(items);
   for (const { item, count } of itemCounts.values()) {
