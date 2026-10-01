@@ -1,4 +1,4 @@
-import type { DescriptionQuality } from "./catalog";
+import type { ChampionKit, DescriptionQuality } from "./catalog";
 import type { AbilityContext } from "./game-state";
 
 export type NormalizedChampion = {
@@ -7,6 +7,7 @@ export type NormalizedChampion = {
   name: string;
   title: string;
   tags: string[];
+  kit: ChampionKit;
 };
 
 export type NormalizedSelectedAugment = {
@@ -131,7 +132,7 @@ export type DataQualitySummary = {
 };
 
 export type RecommendationSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   patch: string;
   generatedAt: string;
   champion: NormalizedChampion | null;

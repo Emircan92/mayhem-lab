@@ -35,5 +35,18 @@ test("the bundled generated snapshot is internally consistent and pinned", async
     assert.equal(manifest.counts.champions, championFile.champions.length);
     assert.equal(manifest.counts.items, itemFile.items.length);
     assert.equal(manifest.counts.augments, augmentFile.augments.length);
+    assert.equal(championFile.schemaVersion, 2);
+    for (const champion of championFile.champions) {
+      assert.deepEqual(Object.keys(champion.kit), ["passive", "q", "w", "e", "r"]);
+      for (const ability of Object.values(champion.kit)) {
+        assert.ok(ability.name.trim());
+        assert.ok(ability.description.trim());
+        assert.equal(/<[^>]+>/.test(ability.description), false);
+      }
+    }
+
+    const volibear = championFile.champions.find((champion) => champion.name === "Volibear");
+    assert.equal(volibear?.kit.q.name, "Thundering Smash");
+    assert.equal(volibear?.kit.w.name, "Frenzied Maul");
   }
 });

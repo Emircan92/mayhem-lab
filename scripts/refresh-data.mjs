@@ -228,19 +228,33 @@ function selectDescription(augment, stringTable) {
 
 export function normalizeChampions(raw, patch) {
   return Object.values(raw.data ?? {})
-    .map((champion) => ({
-      id: Number(champion.key),
-      key: champion.id,
-      name: champion.name,
-      title: champion.title,
-      tags: champion.tags ?? [],
-      image: {
-        file: champion.image?.full ?? null,
-        url: champion.image?.full
-          ? `https://ddragon.leagueoflegends.com/cdn/${patch}/img/champion/${champion.image.full}`
-          : null,
-      },
-    }))
+    .map((champion) => {
+      const [q, w, e, r] = champion.spells ?? [];
+      const normalizeAbility = (ability) => ({
+        name: cleanRichText(ability?.name),
+        description: cleanRichText(ability?.description),
+      });
+      return {
+        id: Number(champion.key),
+        key: champion.id,
+        name: champion.name,
+        title: champion.title,
+        tags: champion.tags ?? [],
+        kit: {
+          passive: normalizeAbility(champion.passive),
+          q: normalizeAbility(q),
+          w: normalizeAbility(w),
+          e: normalizeAbility(e),
+          r: normalizeAbility(r),
+        },
+        image: {
+          file: champion.image?.full ?? null,
+          url: champion.image?.full
+            ? `https://ddragon.leagueoflegends.com/cdn/${patch}/img/champion/${champion.image.full}`
+            : null,
+        },
+      };
+    })
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
@@ -375,7 +389,14 @@ export function validateSnapshot({ champions, items, augments, overrideKeys = []
   const duplicateAugmentInternalNames = duplicateValues(augments, (augment) => augment.internalName);
   const duplicateAugmentNames = duplicateValues(augments, (augment) => augment.name, normalizedLookup);
   const invalidChampions = champions.filter(
-    (champion) => !Number.isInteger(champion.id) || champion.id <= 0 || !champion.name?.trim() || !champion.key?.trim(),
+    (champion) =>
+      !Number.isInteger(champion.id) ||
+      champion.id <= 0 ||
+      !champion.name?.trim() ||
+      !champion.key?.trim() ||
+      !["passive", "q", "w", "e", "r"].every(
+        (slot) => champion.kit?.[slot]?.name?.trim() && champion.kit?.[slot]?.description?.trim(),
+      ),
   );
   const duplicateChampionIds = duplicateValues(champions, (champion) => champion.id);
   const duplicateChampionNames = duplicateValues(champions, (champion) => champion.name, normalizedLookup);
@@ -427,7 +448,7 @@ export function validateSnapshot({ champions, items, augments, overrideKeys = []
   if (duplicateAugmentIds.length) errors.push("Augment IDs are not unique.");
   if (duplicateAugmentInternalNames.length) errors.push("Augment internal names are not unique.");
   if (duplicateAugmentNames.length) errors.push("Normalized augment display names are not unique.");
-  if (invalidChampions.length) errors.push(`${invalidChampions.length} champions have invalid IDs or names.`);
+  if (invalidChampions.length) errors.push(`${invalidChampions.length} champions have invalid IDs, names, or kit entries.`);
   if (duplicateChampionIds.length || duplicateChampionNames.length) errors.push("Champion IDs or names are not unique.");
   if (invalidItems.length) errors.push(`${invalidItems.length} items have invalid IDs or names.`);
   if (duplicateItemIds.length) errors.push("Item IDs are not unique.");
@@ -462,7 +483,7 @@ export function validateSnapshot({ champions, items, augments, overrideKeys = []
       augmentIdsUnique: duplicateAugmentIds.length === 0,
       augmentInternalNamesUnique: duplicateAugmentInternalNames.length === 0,
       augmentDisplayNamesUnique: duplicateAugmentNames.length === 0,
-      championIdsAndNamesValid: invalidChampions.length === 0,
+      championIdsNamesAndKitsValid: invalidChampions.length === 0,
       championIdsAndNamesUnique: duplicateChampionIds.length === 0 && duplicateChampionNames.length === 0,
       itemIdsAndNamesValid: invalidItems.length === 0,
       itemIdsUnique: duplicateItemIds.length === 0,
@@ -494,7 +515,7 @@ async function main() {
   const communityBase = `${COMMUNITY_DRAGON_ORIGIN}/${communityPatch}`;
   const urls = {
     dataDragonVersions: DATA_DRAGON_VERSIONS_URL,
-    champions: `${dataDragonBase}/champion.json`,
+    champions: `${dataDragonBase}/championFull.json`,
     items: `${dataDragonBase}/item.json`,
     kiwiMembership: `${communityBase}/game/maps/modespecificdata/kiwi.bin.json`,
     augmentMetadata: `${communityBase}/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json`,
@@ -536,7 +557,7 @@ async function main() {
   await mkdir(outputDirectory, { recursive: true });
   await Promise.all([
     writeJson(path.join(outputDirectory, "champions.json"), {
-      schemaVersion: 1,
+      schemaVersion: 2,
       patch: dataDragonPatch,
       champions,
     }),

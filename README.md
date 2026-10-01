@@ -41,3 +41,13 @@ node scripts/refresh-data.mjs --patch 16.19.1
 ```
 
 The application runtime should read the generated JSON only. It should never fetch these upstream sources during a game.
+
+## Rerun the Volibear calibration
+
+With the development server running and a real recommendation provider configured, run:
+
+```sh
+pnpm calibrate:volibear
+```
+
+This posts the preserved `Volibear / Courage of the Colossus / Dropkick / Clown College` state from `data/calibration/volibear-dropkick.json` to the local recommendation endpoint. It prints the validated recommendation and request-size measurements; it does not assert which augment must win. Set `MAYHEM_CALIBRATION_URL` to target a different local endpoint.

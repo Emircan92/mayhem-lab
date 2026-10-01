@@ -16,9 +16,17 @@ import {
 } from "../lib/preprocess-game-state";
 import { createAugmentRecommendationRequest } from "../lib/recommendation-contract";
 
+const testKit = {
+  passive: { name: "Passive", description: "Gain power after using an ability." },
+  q: { name: "Q Spell", description: "Damage an enemy." },
+  w: { name: "W Spell", description: "Shield the champion." },
+  e: { name: "E Spell", description: "Immobilize an enemy." },
+  r: { name: "R Spell", description: "Leap into a fight." },
+};
+
 const champions: Champion[] = [
-  { id: 1, key: "Hero", name: "Hero", title: "the Test", tags: ["Marksman"] },
-  { id: 2, key: "Enemy", name: "Enemy", title: "the Rival", tags: ["Tank", "Fighter"] },
+  { id: 1, key: "Hero", name: "Hero", title: "the Test", tags: ["Marksman"], kit: testKit },
+  { id: 2, key: "Enemy", name: "Enemy", title: "the Rival", tags: ["Tank", "Fighter"], kit: testKit },
 ];
 
 function augment(overrides: Partial<Augment> = {}): Augment {
@@ -214,6 +222,8 @@ test("inventory and enemy summaries remain descriptive and source-backed", () =>
     tagCounts: { Tank: 1, Fighter: 1 },
     basis: "data-dragon-champion-tags",
   });
+  assert.deepEqual(snapshot.champion?.kit, testKit);
+  assert.deepEqual(snapshot.enemies[0].kit, testKit);
 });
 
 test("the augment request candidate set is derived only from supplied offers", () => {

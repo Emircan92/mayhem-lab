@@ -5,6 +5,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "data:refresh": "node scripts/refresh-data.mjs",
+    "calibrate:volibear": "node scripts/run-calibration.mjs data/calibration/volibear-dropkick.json",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

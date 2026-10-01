@@ -5,10 +5,42 @@ import {
   cleanRichText,
   expandStringReferences,
   findUnresolvedTokens,
+  normalizeChampions,
   normalizeAugments,
   resolveDirectDescriptionTokens,
   validateSnapshot,
 } from "../scripts/refresh-data.mjs";
+
+test("champion normalization keeps only concise cleaned passive and QWER grounding", () => {
+  const champions = normalizeChampions({
+    data: {
+      TestHero: {
+        id: "TestHero",
+        key: "123",
+        name: "Test Hero",
+        title: "the Test",
+        tags: ["Fighter"],
+        passive: { name: " Test Passive ", description: "Gain <b>power</b>." },
+        spells: [
+          { name: "Q", description: "Dash<br>forward." },
+          { name: "W", description: "Heal." },
+          { name: "E", description: "Stun." },
+          { name: "R", description: "Transform." },
+        ],
+        image: { full: "TestHero.png" },
+      },
+    },
+  }, "16.19.1");
+
+  assert.deepEqual(champions[0].kit, {
+    passive: { name: "Test Passive", description: "Gain power." },
+    q: { name: "Q", description: "Dash\nforward." },
+    w: { name: "W", description: "Heal." },
+    e: { name: "E", description: "Stun." },
+    r: { name: "R", description: "Transform." },
+  });
+  assert.equal("tooltip" in champions[0].kit.q, false);
+});
 
 test("cleanRichText removes Riot presentation markup but preserves readable text", () => {
   assert.equal(
@@ -106,7 +138,18 @@ test("KIWI membership joins by platform ID and applies an internal-name override
 
 test("validation fails duplicate lookup identities and surfaces unresolved descriptions", () => {
   const validation = validateSnapshot({
-    champions: [{ id: 1, key: "One", name: "One" }],
+    champions: [{
+      id: 1,
+      key: "One",
+      name: "One",
+      kit: {
+        passive: { name: "P", description: "Passive." },
+        q: { name: "Q", description: "Q spell." },
+        w: { name: "W", description: "W spell." },
+        e: { name: "E", description: "E spell." },
+        r: { name: "R", description: "R spell." },
+      },
+    }],
     items: [{ id: 1, name: "Item" }],
     augments: [
       {

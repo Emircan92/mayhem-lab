@@ -18,7 +18,20 @@ import {
   type RecommendationRequest,
 } from "../lib/recommendation-contract";
 
-const champion: Champion = { id: 1, key: "Hero", name: "Hero", title: "the Test", tags: ["Mage"] };
+const champion: Champion = {
+  id: 1,
+  key: "Hero",
+  name: "Hero",
+  title: "the Test",
+  tags: ["Mage"],
+  kit: {
+    passive: { name: "Passive", description: "Gain power after casting." },
+    q: { name: "Q Spell", description: "Damage an enemy." },
+    w: { name: "W Spell", description: "Shield the champion." },
+    e: { name: "E Spell", description: "Immobilize an enemy." },
+    r: { name: "R Spell", description: "Leap into a fight." },
+  },
+};
 const contextualAugment: Augment = {
   id: 10,
   internalName: "Contextual",
@@ -140,6 +153,16 @@ test("missing ability context warning is present in the constructed request", ()
   assert.match(prompt.input, /recommendation confidence may be reduced/);
 });
 
+test("prompt requires state-specific player and enemy kit interaction reasoning", () => {
+  const prompt = buildRecommendationPrompt(augmentRequest());
+  assert.match(prompt.input, /"kit"/);
+  assert.match(prompt.input, /"Q Spell"/);
+  assert.match(prompt.instructions, /player's specific champion abilities/);
+  assert.match(prompt.instructions, /specific enemy champion abilities or threats/);
+  assert.match(prompt.instructions, /state-specific interaction reasoning/);
+  assert.match(prompt.instructions, /Mention only interactions that affect the decision/);
+});
+
 test("candidate policy excludes only clear metadata-backed non-candidates", () => {
   const component = item({ id: 21, name: "Component", into: [20] });
   const nonPurchasable = item({ id: 22, name: "Transformed", purchasable: false });
@@ -155,6 +178,22 @@ test("candidate policy excludes only clear metadata-backed non-candidates", () =
   assert.deepEqual(
     buildCompletedItemCandidates([items[0], component, nonPurchasable, wrongMap, consumable, internal]).map((entry) => entry.id),
     [20],
+  );
+});
+
+test("candidate policy excludes only recipe-less Lane starters", () => {
+  const starter = item({ id: 26, name: "Lane Starter", tags: ["Lane"], from: [] });
+  const craftedLaneItem = item({ id: 27, name: "Crafted Lane Item", tags: ["Lane"], from: [1001] });
+  const recipeLessOddball = item({ id: 28, name: "Recipe-less Oddball", tags: ["Jungle"], from: [] });
+  const completedBoots = item({ id: 29, name: "Completed Boots", tags: ["Boots"], from: [1001] });
+
+  assert.equal(itemCandidateExclusion(starter), "starter");
+  assert.equal(itemCandidateExclusion(craftedLaneItem), null);
+  assert.equal(itemCandidateExclusion(recipeLessOddball), null);
+  assert.equal(itemCandidateExclusion(completedBoots), null);
+  assert.deepEqual(
+    buildCompletedItemCandidates([starter, craftedLaneItem, recipeLessOddball, completedBoots]).map((entry) => entry.id),
+    [29, 27, 28],
   );
 });
 

@@ -40,6 +40,13 @@ function normalizeChampion(champion: Champion): NormalizedChampion {
     name: champion.name,
     title: champion.title,
     tags: [...champion.tags],
+    kit: {
+      passive: { ...champion.kit.passive },
+      q: { ...champion.kit.q },
+      w: { ...champion.kit.w },
+      e: { ...champion.kit.e },
+      r: { ...champion.kit.r },
+    },
   };
 }
 
@@ -301,7 +308,7 @@ export function buildRecommendationSnapshot(
   ];
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     patch: metadata.patch,
     generatedAt: metadata.generatedAt,
     champion,

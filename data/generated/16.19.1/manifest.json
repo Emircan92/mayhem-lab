@@ -6,10 +6,10 @@
     "source": "https://raw.communitydragon.org/16.19/",
     "runtimeUsesLatest": false
   },
-  "generatedAt": "2026-09-27T21:04:35.478Z",
+  "generatedAt": "2026-09-29T23:14:17.666Z",
   "sources": {
     "dataDragonVersions": "https://ddragon.leagueoflegends.com/api/versions.json",
-    "champions": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/champion.json",
+    "champions": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/championFull.json",
     "items": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/item.json",
     "kiwiMembership": "https://raw.communitydragon.org/16.19/game/maps/modespecificdata/kiwi.bin.json",
     "augmentMetadata": "https://raw.communitydragon.org/16.19/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json",
@@ -42,7 +42,7 @@
       "augmentIdsUnique": true,
       "augmentInternalNamesUnique": true,
       "augmentDisplayNamesUnique": true,
-      "championIdsAndNamesValid": true,
+      "championIdsNamesAndKitsValid": true,
       "championIdsAndNamesUnique": true,
       "itemIdsAndNamesValid": true,
       "itemIdsUnique": true,

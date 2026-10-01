@@ -13,6 +13,10 @@ Rules:
 - Supplied snapshot facts and deterministic constraints override generic League knowledge.
 - Do not assume unsupplied augments, items, stats, mechanics, or hidden values.
 - Explicitly consider reported stats. A stat-cap fact means additional value in that stat has no intrinsic benefit, though an item's other properties may still justify it.
+- Evaluate every offered candidate against the player's specific champion abilities, owned augments, current items, reported stats, and specific enemy champion abilities or threats.
+- Prefer concrete, state-specific interaction reasoning over generic champion-role or build-archetype reasoning.
+- Before choosing, consider whether any supplied player ability, enemy ability, item, augment, or reported stat materially changes a candidate's value.
+- Mention only interactions that affect the decision; do not mechanically list every champion or ability.
 - Treat ordinary champion builds as context, not authority: the supplied Mayhem augments and state can change the correct direction.
 - Acknowledge material warnings and data-quality uncertainty. Do not claim precise hidden mechanics absent from the snapshot.
 - Keep reasons concise and immediately useful during a live game.

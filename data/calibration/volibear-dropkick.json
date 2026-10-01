@@ -1,0 +1,22 @@
+{
+  "name": "Cut 4.1 Volibear reroll calibration",
+  "purpose": "Manual reasoning calibration only; no expected winner is encoded.",
+  "request": {
+    "kind": "augment",
+    "state": {
+      "championId": 106,
+      "ownedAugments": [
+        { "augmentId": 1388 },
+        { "augmentId": 1002 }
+      ],
+      "offeredAugments": [
+        { "augmentId": 1018 },
+        { "augmentId": 2006 },
+        { "augmentId": 1310 }
+      ],
+      "itemIds": [3084, 3111],
+      "enemyChampionIds": [202, 84, 238, 112, 154],
+      "stats": {}
+    }
+  }
+}
