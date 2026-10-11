@@ -6,14 +6,73 @@
     "source": "https://raw.communitydragon.org/16.19/",
     "runtimeUsesLatest": false
   },
-  "generatedAt": "2026-09-29T23:14:17.666Z",
+  "generatedAt": "2026-10-11T00:16:44.766Z",
   "sources": {
     "dataDragonVersions": "https://ddragon.leagueoflegends.com/api/versions.json",
     "champions": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/championFull.json",
     "items": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/item.json",
     "kiwiMembership": "https://raw.communitydragon.org/16.19/game/maps/modespecificdata/kiwi.bin.json",
     "augmentMetadata": "https://raw.communitydragon.org/16.19/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json",
-    "mayhemStrings": "https://raw.communitydragon.org/16.19/game/en_us/data/menu/en_us/lol.stringtable.json"
+    "mayhemStrings": "https://raw.communitydragon.org/16.19/game/en_us/data/menu/en_us/lol.stringtable.json",
+    "map12Items": "https://raw.communitydragon.org/16.19/game/data/maps/shipping/map12/map12.bin.json",
+    "rawItems": "https://raw.communitydragon.org/16.19/game/items.cdtb.bin.json",
+    "contentMetadata": "https://raw.communitydragon.org/16.19/content-metadata.json"
+  },
+  "itemEligibility": {
+    "mode": "KIWI",
+    "map": 12,
+    "dataDragonPatch": "16.19.1",
+    "communityDragonPatch": "16.19",
+    "contentBuild": "16.19.8230722+branch.releases-16-19.content.release",
+    "sources": {
+      "map12Items": {
+        "url": "https://raw.communitydragon.org/16.19/game/data/maps/shipping/map12/map12.bin.json",
+        "jsonSha256": "6b10a9ecfe4cbd19df1ccb9a598e738d086d122bfbe8d0eb46e69f85b5f4a385"
+      },
+      "rawItems": {
+        "url": "https://raw.communitydragon.org/16.19/game/items.cdtb.bin.json",
+        "jsonSha256": "302f32f9dd93840de1e37c5db8faa845c1d7f02e4ff3f6116e2ef49762ec6c34"
+      },
+      "items": {
+        "url": "https://ddragon.leagueoflegends.com/cdn/16.19.1/data/en_US/item.json",
+        "jsonSha256": "14c7c4ded26167d1bb6f1283afc6648f5956889dbcf3171ad6a7d96cb2c6e98d"
+      },
+      "contentMetadata": {
+        "url": "https://raw.communitydragon.org/16.19/content-metadata.json",
+        "jsonSha256": "c08c49edaa7f98f463ebbf4fa232245c2bd491c7e3675e8cb2465e48c50c4e11"
+      }
+    },
+    "classifications": {
+      "ordinary-shop": 167,
+      "legacy-or-inaccessible": 471,
+      "unresolved": 45,
+      "other-mode": 161,
+      "conditional": 18,
+      "quest-or-script-gated": 4
+    },
+    "membershipDiff": {
+      "previousPatch": "16.19.1",
+      "status": "compared",
+      "modes": {
+        "ARAM": {
+          "added": [],
+          "removed": []
+        },
+        "FIRSTBLOOD": {
+          "added": [],
+          "removed": []
+        },
+        "KIWI": {
+          "added": [],
+          "removed": []
+        },
+        "KIWI_JADE": {
+          "added": [],
+          "removed": []
+        }
+      },
+      "classificationChanges": []
+    }
   },
   "counts": {
     "champions": 173,

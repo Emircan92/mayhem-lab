@@ -35,6 +35,22 @@ test("the bundled generated snapshot is internally consistent and pinned", async
     assert.equal(manifest.counts.champions, championFile.champions.length);
     assert.equal(manifest.counts.items, itemFile.items.length);
     assert.equal(manifest.counts.augments, augmentFile.augments.length);
+    assert.equal(itemFile.schemaVersion, 2);
+    assert.equal(itemFile.eligibilitySources.communityDragonPatch, manifest.communityDragon.patch);
+    assert.deepEqual(itemFile.eligibilityDiagnostics.errors, []);
+    assert.ok(itemFile.eligibilityDiagnostics.modeMembership.KIWI.length > 0);
+    for (const source of Object.values(itemFile.eligibilitySources.sources)) {
+      assert.match(source.jsonSha256, /^[a-f0-9]{64}$/);
+      assert.doesNotMatch(source.url, /\/latest\//);
+    }
+    for (const item of itemFile.items) {
+      assert.ok(item.eligibility.reasons.length > 0);
+      if (item.eligibility.classification === "ordinary-shop") {
+        assert.ok(item.eligibility.memberships.some((entry) => entry.mode === "KIWI"));
+        assert.equal(item.eligibility.storeVisibility.mInStore, true);
+        assert.notEqual(item.eligibility.storeVisibility.mHidefromAll, true);
+      }
+    }
     assert.equal(championFile.schemaVersion, 2);
     for (const champion of championFile.champions) {
       assert.deepEqual(Object.keys(champion.kit), ["passive", "q", "w", "e", "r"]);

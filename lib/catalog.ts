@@ -53,4 +53,13 @@ export type Item = {
   from: number[];
   into: number[];
   mapIds: number[];
+  // Optional for older inventory snapshots; absent eligibility can never authorize a recommendation.
+  eligibility?: {
+    classification: string;
+    reasons: string[];
+    rawItemReference: string | null;
+    memberships: Array<{ mode: string; modeReference: string; listReference: string; itemReference: string }>;
+    storeVisibility: Record<string, unknown> | null;
+    purchaseRestrictions: Record<string, unknown>;
+  };
 };

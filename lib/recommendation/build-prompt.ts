@@ -38,7 +38,7 @@ export function buildRecommendationPrompt(request: RecommendationRequest): Recom
     : {
         objective: "Recommend the next completed item.",
         candidatePolicy:
-          "Only candidateItems are legal choices. They are conservative catalog-terminal ARAM records; ambiguous mode variants are retained when metadata cannot disqualify them.",
+          "Only candidateItems are legal choices. They are completed items established as ordinary KIWI shop purchases by pinned mode membership and raw purchase restrictions; conditional and unresolved items are excluded.",
         candidates: request.candidateItems.map((candidate) => ({
           id: candidate.id,
           name: candidate.name,

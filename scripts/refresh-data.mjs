@@ -1,7 +1,9 @@
-import { readFile, mkdir, writeFile } from "node:fs/promises";
+import { readFile, readdir, mkdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { deriveItemEligibility, compareItemMembership } from "./item-eligibility.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DRAGON_VERSIONS_URL = "https://ddragon.leagueoflegends.com/api/versions.json";
@@ -501,6 +503,18 @@ async function writeJson(filePath, value) {
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+async function previousItems(patch) {
+  const root = path.join(ROOT, "data", "generated");
+  const versions = (await readdir(root)).filter((value) => /^\d+\.\d+\.\d+$/.test(value))
+    .filter((value) => value.localeCompare(patch, undefined, { numeric: true }) <= 0)
+    .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+  for (const version of versions) {
+    const snapshot = JSON.parse(await readFile(path.join(root, version, "items.json"), "utf8"));
+    if (snapshot.eligibilityDiagnostics) return { snapshot, patch: version };
+  }
+  return { snapshot: null, patch: null };
+}
+
 async function main() {
   const { patch: requestedPatch } = parseArgs(process.argv.slice(2));
   console.log("Resolving Riot Data Dragon patch...");
@@ -520,20 +534,45 @@ async function main() {
     kiwiMembership: `${communityBase}/game/maps/modespecificdata/kiwi.bin.json`,
     augmentMetadata: `${communityBase}/plugins/rcp-be-lol-game-data/global/default/v1/cherry-augments.json`,
     mayhemStrings: `${communityBase}/game/en_us/data/menu/en_us/lol.stringtable.json`,
+    map12Items: `${communityBase}/game/data/maps/shipping/map12/map12.bin.json`,
+    rawItems: `${communityBase}/game/items.cdtb.bin.json`,
+    contentMetadata: `${communityBase}/content-metadata.json`,
   };
 
   console.log(`Fetching Data Dragon ${dataDragonPatch} and pinned CommunityDragon ${communityPatch}...`);
-  const [championRaw, itemRaw, kiwiData, clientMetadata, stringTableRaw, overrideFile] = await Promise.all([
+  const [championRaw, itemRaw, kiwiData, clientMetadata, stringTableRaw, overrideFile, mapData, rawItems, contentMetadata, previous] = await Promise.all([
     fetchJson(urls.champions),
     fetchJson(urls.items),
     fetchJson(urls.kiwiMembership),
     fetchJson(urls.augmentMetadata),
     fetchJson(urls.mayhemStrings),
     readFile(path.join(ROOT, "data", "curated", "augment-overrides.json"), "utf8").then(JSON.parse),
+    fetchJson(urls.map12Items),
+    fetchJson(urls.rawItems),
+    fetchJson(urls.contentMetadata),
+    previousItems(dataDragonPatch),
   ]);
 
+  if (typeof contentMetadata.version !== "string" || !contentMetadata.version.startsWith(`${communityPatch}.`)) {
+    throw new Error("CommunityDragon content build does not match the requested patch.");
+  }
+
   const champions = normalizeChampions(championRaw, dataDragonPatch);
-  const items = normalizeItems(itemRaw, dataDragonPatch);
+  const eligibility = deriveItemEligibility({ items: normalizeItems(itemRaw, dataDragonPatch), mapData, rawItems });
+  const membershipDiff = compareItemMembership(previous.snapshot, eligibility, previous.patch);
+  console.log(`Item eligibility diagnostics: ${JSON.stringify({ ...eligibility.diagnostics,
+    modeMembership: Object.fromEntries(Object.entries(eligibility.diagnostics.modeMembership).map(([mode, ids]) => [mode, ids.length])), membershipDiff })}`);
+  if (eligibility.diagnostics.errors.length) {
+    throw new Error(`Item reference/schema validation failed:\n- ${eligibility.diagnostics.errors.join("\n- ")}`);
+  }
+  const items = eligibility.items;
+  const itemEligibilitySources = {
+    mode: "KIWI", map: 12, dataDragonPatch, communityDragonPatch: communityPatch,
+    contentBuild: contentMetadata.version,
+    // Hash the parsed JSON representation, not the original HTTP response bytes.
+    sources: Object.fromEntries([["map12Items", mapData], ["rawItems", rawItems], ["items", itemRaw], ["contentMetadata", contentMetadata]]
+      .map(([name, data]) => [name, { url: urls[name], jsonSha256: createHash("sha256").update(JSON.stringify(data)).digest("hex") }])),
+  };
   const augments = normalizeAugments({
     kiwiData,
     clientMetadata,
@@ -562,8 +601,11 @@ async function main() {
       champions,
     }),
     writeJson(path.join(outputDirectory, "items.json"), {
-      schemaVersion: 1,
+      schemaVersion: 2,
       patch: dataDragonPatch,
+      eligibilitySources: itemEligibilitySources,
+      eligibilityDiagnostics: eligibility.diagnostics,
+      membershipDiff,
       items,
     }),
     writeJson(path.join(outputDirectory, "augments.json"), {
@@ -585,6 +627,7 @@ async function main() {
     },
     generatedAt,
     sources: urls,
+    itemEligibility: { ...itemEligibilitySources, classifications: eligibility.diagnostics.classifications, membershipDiff },
     counts: {
       champions: champions.length,
       items: items.length,

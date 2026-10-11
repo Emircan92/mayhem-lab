@@ -61,6 +61,8 @@ function item(overrides: Partial<Item> = {}): Item {
     from: [1001],
     into: [],
     mapIds: [12],
+    eligibility: { classification: "ordinary-shop", reasons: ["test-source"], rawItemReference: "Items/20",
+      memberships: [], storeVisibility: { mInStore: true }, purchaseRestrictions: {} },
     ...overrides,
   };
 }

@@ -13,7 +13,8 @@ export type ItemCandidateExclusion =
   | "component"
   | "starter"
   | "non-item-category"
-  | "no-positive-price";
+  | "no-positive-price"
+  | "not-established-KIWI-shop-purchase";
 
 export function itemCandidateExclusion(item: Item): ItemCandidateExclusion | null {
   if (!item.name.trim() || OBVIOUS_INTERNAL_NAME.test(item.name)) return "unnamed-or-internal";
@@ -23,6 +24,7 @@ export function itemCandidateExclusion(item: Item): ItemCandidateExclusion | nul
   if (item.tags.includes("Lane") && item.from.length === 0) return "starter";
   if (item.tags.some((tag) => NON_ITEM_TAGS.has(tag))) return "non-item-category";
   if (item.gold.total <= 0) return "no-positive-price";
+  if (item.eligibility?.classification !== "ordinary-shop") return "not-established-KIWI-shop-purchase";
   return null;
 }
 
