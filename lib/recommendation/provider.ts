@@ -1,5 +1,7 @@
 import OpenAI from "openai";
+import { LengthFinishReasonError } from "openai/error";
 import { zodTextFormat } from "openai/helpers/zod";
+import { ZodError } from "zod";
 
 import type { RecommendationRequest } from "../recommendation-contract";
 import type { RecommendationPrompt } from "./build-prompt";
@@ -15,41 +17,141 @@ export interface RecommendationProvider {
   generate(request: RecommendationRequest, prompt: RecommendationPrompt): Promise<unknown>;
 }
 
+export type ProviderFailureClassification = "token-exhaustion" | "incomplete-output" | "content-filter"
+  | "refusal" | "invalid-structured-output" | "provider-request" | "configuration";
+
 export class RecommendationProviderError extends Error {
-  constructor(message: string) {
+  constructor(message: string, readonly classification: ProviderFailureClassification = "provider-request") {
     super(message);
     this.name = "RecommendationProviderError";
   }
 }
 
+const AUGMENT_MAX_OUTPUT_TOKENS = 1200;
+const DEFAULT_ITEM_MAX_OUTPUT_TOKENS = 8192;
+const ITEM_TOKEN_CEILING = 32768;
+
+export function itemOutputTokenBudget(value: string | number | undefined): number {
+  if (value === undefined || value === "") return DEFAULT_ITEM_MAX_OUTPUT_TOKENS;
+  const budget = Number(value);
+  if (!/^\d+$/.test(String(value)) || !Number.isSafeInteger(budget)
+    || budget <= AUGMENT_MAX_OUTPUT_TOKENS || budget > ITEM_TOKEN_CEILING) {
+    throw new RecommendationProviderError(
+      "Item recommendation output-token budget is not configured correctly. MAYHEM_ITEM_MAX_OUTPUT_TOKENS must be an integer from 1201 to 32768.",
+      "configuration",
+    );
+  }
+  return budget;
+}
+
+// Narrow transport seam keeps tests offline, while production still uses the SDK's strict parser.
+export type ProviderCompletion = {
+  status?: string | null;
+  output_parsed?: unknown;
+  incomplete_details?: { reason?: string | null } | null;
+  usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number;
+    input_tokens_details?: { cached_tokens?: number }; output_tokens_details?: { reasoning_tokens?: number } } | null;
+  output?: unknown;
+};
+type CompletionParameters = Parameters<OpenAI["responses"]["parse"]>[0];
+type CompletionOptions = { maxRetries: number; timeout: number };
+export type CompletionRunner = (parameters: CompletionParameters, options?: CompletionOptions) => Promise<ProviderCompletion>;
+export type ProviderCompletionEvent = {
+  event: "mayhem-recommendation-provider";
+  kind: "item" | "augment";
+  model: string;
+  attempt: number;
+  maxOutputTokens: number;
+  status: string;
+  incompleteReason: "max_output_tokens" | "content_filter" | "other" | null;
+  classification: ProviderFailureClassification | "success";
+  inputTokens: number | null;
+  outputTokens: number | null;
+  reasoningTokens: number | null;
+  cachedInputTokens: number | null;
+  totalTokens: number | null;
+  elapsedMs: number;
+};
+type ProviderOptions = {
+  itemMaxOutputTokens?: number | string;
+  complete?: CompletionRunner;
+  log?: (event: ProviderCompletionEvent) => void;
+};
+
+function completionFailure(response: ProviderCompletion): ProviderFailureClassification | null {
+  if (response.status === "incomplete") {
+    if (response.incomplete_details?.reason === "max_output_tokens") return "token-exhaustion";
+    if (response.incomplete_details?.reason === "content_filter") return "content-filter";
+    if (!response.incomplete_details?.reason) return "incomplete-output";
+    return "provider-request";
+  }
+  const refused = Array.isArray(response.output) && response.output.some((item) =>
+    Array.isArray(item?.content) && item.content.some((content: { type?: string }) => content.type === "refusal"));
+  if (refused) return "refusal";
+  if (response.status === "completed" && response.output_parsed != null) return null;
+  return response.status === "completed" ? "invalid-structured-output" : "provider-request";
+}
+
+function tokenCount(value: number | undefined): number | null {
+  return Number.isSafeInteger(value) && value! >= 0 ? value! : null;
+}
+
 export class OpenAIRecommendationProvider implements RecommendationProvider {
   readonly metadata: ProviderMetadata;
-  private readonly client: OpenAI;
+  private readonly complete: CompletionRunner;
+  private readonly log: (event: ProviderCompletionEvent) => void;
+  private readonly itemBudget: string | number | undefined;
 
-  constructor(apiKey: string, model: string) {
-    this.client = new OpenAI({ apiKey });
+  constructor(apiKey: string, model: string, options: ProviderOptions = {}) {
+    const client = new OpenAI({ apiKey });
+    this.complete = options.complete ?? ((parameters, requestOptions) => client.responses.parse(parameters, requestOptions));
+    this.log = options.log ?? ((event) => console.info("Mayhem provider completion", event));
+    this.itemBudget = options.itemMaxOutputTokens ?? process.env.MAYHEM_ITEM_MAX_OUTPUT_TOKENS;
     this.metadata = { provider: "openai", model };
   }
 
-  async generate(_request: RecommendationRequest, prompt: RecommendationPrompt): Promise<unknown> {
-    const response = await this.client.responses.parse({
-      model: this.metadata.model,
-      instructions: prompt.instructions,
-      input: prompt.input,
-      max_output_tokens: 1200,
-      store: false,
-      text: {
-        format: zodTextFormat(modelRecommendationSchema, "mayhem_recommendation"),
-      },
-    });
-
-    if (!response.output_parsed) {
-      const detail = response.incomplete_details?.reason
-        ? ` (${response.incomplete_details.reason})`
-        : "";
-      throw new RecommendationProviderError(`The model did not return a complete structured recommendation${detail}.`);
+  async generate(request: RecommendationRequest, prompt: RecommendationPrompt): Promise<unknown> {
+    const initialBudget = request.kind === "item" ? itemOutputTokenBudget(this.itemBudget) : AUGMENT_MAX_OUTPUT_TOKENS;
+    const attempts = request.kind === "item" ? 2 : 1;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const budget = attempt === 1 ? initialBudget : Math.min(initialBudget * 2, ITEM_TOKEN_CEILING);
+      const started = Date.now();
+      let response: ProviderCompletion | undefined;
+      let classification: ProviderFailureClassification | null;
+      try {
+        response = await this.complete({
+          model: this.metadata.model,
+          instructions: prompt.instructions,
+          input: prompt.input,
+          max_output_tokens: budget,
+          store: false,
+          text: { format: zodTextFormat(modelRecommendationSchema, "mayhem_recommendation") },
+        }, request.kind === "item" ? { maxRetries: 0, timeout: 120_000 } : undefined);
+        classification = completionFailure(response);
+      } catch (error) {
+        classification = error instanceof LengthFinishReasonError ? "token-exhaustion"
+          : error instanceof SyntaxError || error instanceof ZodError ? "invalid-structured-output" : "provider-request";
+      }
+      const reason = response?.incomplete_details?.reason;
+      this.log({
+        event: "mayhem-recommendation-provider", kind: request.kind, model: this.metadata.model,
+        attempt, maxOutputTokens: budget,
+        status: ["completed", "incomplete", "failed", "cancelled", "queued", "in_progress"].includes(response?.status ?? "")
+          ? response!.status! : response ? "unknown" : classification === "invalid-structured-output" ? "parse-error" : "request-error",
+        incompleteReason: reason === "max_output_tokens" || reason === "content_filter" ? reason : reason ? "other" : null,
+        classification: classification ?? "success",
+        inputTokens: tokenCount(response?.usage?.input_tokens), outputTokens: tokenCount(response?.usage?.output_tokens),
+        reasoningTokens: tokenCount(response?.usage?.output_tokens_details?.reasoning_tokens),
+        cachedInputTokens: tokenCount(response?.usage?.input_tokens_details?.cached_tokens),
+        totalTokens: tokenCount(response?.usage?.total_tokens), elapsedMs: Date.now() - started,
+      });
+      if (classification === null) return response!.output_parsed;
+      if (attempt < attempts && (classification === "token-exhaustion" || classification === "incomplete-output")) continue;
+      throw new RecommendationProviderError(
+        `The model did not return a complete structured recommendation (${classification}).`, classification,
+      );
     }
-    return response.output_parsed;
+    throw new RecommendationProviderError("The recommendation provider request failed.");
   }
 }
 

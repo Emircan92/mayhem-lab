@@ -16,6 +16,10 @@ Set `OPENAI_API_KEY` and `OPENAI_MODEL` in `.env.local`, then open `http://local
 
 For local UI testing without a paid model call, set `MAYHEM_RECOMMENDATION_PROVIDER=fake`. The fake always chooses the first valid candidate and is explicitly labeled as non-strategic.
 
+Item requests use `MAYHEM_ITEM_MAX_OUTPUT_TOKENS` (default **8192**, integer **1201–32768**). The configured `OPENAI_MODEL` is unchanged. Output budgets cover reasoning as well as visible JSON ([OpenAI documentation](https://developers.openai.com/api/docs/guides/reasoning)). An item request gets at most one completion retry, only for token exhaustion or an incomplete response without a reported cause; the retry doubles the initial budget up to **32768**. Each item attempt has a 120-second transport timeout and SDK transport retries disabled. Refusals, content filters, transport errors, invalid JSON/schema, and failed local candidate validation do not trigger this retry. Augments retain their existing **1200** output tokens and SDK transport options, with no completion retry.
+
+Server completion telemetry records request kind, configured model, attempt, output budget, completion status, sanitized failure classification, elapsed time, and available input/output/reasoning/cached/total token counts. It excludes API credentials, raw exceptions, response text, prompts, and game-state contents. Provider completion success is separate from local recommendation validation; validation rejection is logged as `invalid-recommendation`. Responses remain `store: false`; no telemetry is added to persisted gameplay state.
+
 Expand **Recommendation debug** below the page to inspect the normalized snapshot, the exact candidate-constrained request, provider/model label, and locally validated structured response. Provider credentials are server-only and are never included in this panel.
 
 ## Refresh the snapshot
@@ -55,3 +59,17 @@ pnpm calibrate:volibear
 ```
 
 This posts the preserved `Volibear / Courage of the Colossus / Dropkick / Clown College` state from `data/calibration/volibear-dropkick.json` to the local recommendation endpoint. It prints the validated recommendation and request-size measurements; it does not assert which augment must win. Set `MAYHEM_CALIBRATION_URL` to target a different local endpoint.
+
+For offline item payload measurements using the same preserved state, run `pnpm measure:item-payload` (or pass another existing fixture path). This reconstructs the original completed-item filter and provider input, then compares them with the mode-aware filter and current provider parameters. It makes no model/API call, retains full descriptions, and prints only aggregate sizes. The Volibear fixture supplies game state for size measurement; it is not an item-choice quality calibration. No Rumble, Garen, or Karthus calibration states are bundled.
+
+Pinned 16.19.1 results, in UTF-8 bytes (JSON bodies, excluding HTTP headers):
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Candidates | 192 | 98 |
+| Normalized candidate JSON | 92,263 | 48,077 |
+| Normalized recommendation request | 104,628 | 60,442 |
+| Provider input string | 87,001 | 50,265 |
+| Provider JSON body, including instructions and strict response schema | 96,890 | 57,269 |
+
+These measurements use the example model name and default budgets. They are byte counts, not estimated model tokens. Live model quality, latency, and sufficient reasoning budget still require real-game calibration; the offline suite verifies retry bounds, strict validation, and eligibility behavior.

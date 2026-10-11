@@ -79,7 +79,7 @@ export async function POST(httpRequest: Request) {
       return failure(400, "INVALID_REQUEST", error.message);
     }
     if (error instanceof InvalidModelResponseError) {
-      console.error("Mayhem recommendation response rejected", { issues: error.issues });
+      console.error("Mayhem recommendation response rejected", { classification: "invalid-recommendation", issueCount: error.issues.length });
       return failure(
         502,
         "INVALID_MODEL_RESPONSE",
@@ -89,7 +89,7 @@ export async function POST(httpRequest: Request) {
     }
     if (error instanceof RecommendationProviderError) {
       const notConfigured = error.message.includes("not configured") || error.message.includes("fake recommendation");
-      console.error("Mayhem recommendation provider error", { message: error.message });
+      console.error("Mayhem recommendation provider error", { classification: error.classification });
       return failure(
         notConfigured ? 503 : 502,
         notConfigured ? "NOT_CONFIGURED" : "PROVIDER_ERROR",
@@ -97,7 +97,8 @@ export async function POST(httpRequest: Request) {
       );
     }
 
-    console.error("Mayhem recommendation request failed", error);
+    // SDK errors can carry request headers/body. Never log the raw exception or game state.
+    console.error("Mayhem recommendation request failed", { classification: "unexpected-error" });
     return failure(502, "PROVIDER_ERROR", "The recommendation provider request failed. Please retry.");
   }
 }
