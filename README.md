@@ -22,6 +22,20 @@ Server completion telemetry records request kind, configured model, attempt, out
 
 Expand **Recommendation debug** below the page to inspect the normalized snapshot, the exact candidate-constrained request, provider/model label, and locally validated structured response. Provider credentials are server-only and are never included in this panel.
 
+## Live Sync V1
+
+The dev and production start scripts bind to `127.0.0.1`. Opt in using **Live Sync** while a game is running, then explicitly confirm that it is your current **ARAM Mayhem** game and that any saved augments/offers belong to it. Use **New Game** first if those selections belong to a previous game. Map12 is a compatibility check, not proof of Mayhem; queue/mode identity remains user-confirmed.
+
+Live Sync imports your champion, opposing champions, six ordinary inventory slots (including duplicate and transformed/non-shop items), and reported attack speed, AD, AP, armor, MR, ability haste and maximum health. Trinket slot 6 is excluded; item stack count is retained without treating a stack as multiple occupied slots. Crit chance, owned augments, all three offers and affected-ability contexts remain manual. Replacing one offer affects only that slot. Unknown inventory IDs remain visible and block live recommendations until you disable sync and resolve the inventory manually.
+
+The same-origin `/api/live-state` Node route reads only Riot's fixed local `activeplayer`, `playerlist` and `gamestats` endpoints. It uses the bundled public Riot root CA with request-scoped certificate and hostname validation, an absolute 1.8-second upstream deadline, a response size limit, no redirects, and `Cache-Control: no-store`. It requires a loopback Host and a custom request header, rejects foreign Origin/Fetch Metadata, and returns normalized data without Riot IDs. It uses no Riot API key, lockfile or League client credentials. Certificate failures never fall back to disabled validation; update the bundled root from Riot's documented source if it changes.
+
+Polling runs about every two seconds while visible, shares in-flight requests, and refreshes on focus and before a recommendation when data is stale (six seconds). A failed poll marks observations stale; live recommendations require fresh, explicitly attached data. Disable sync to restore the saved manual fields. Live observations are memory-only and never overwrite persisted manual selections. Reloading leaves those selections intact and starts with sync off, requiring a new explicit attachment. No persistent polling service is installed and polling never calls the recommendation provider.
+
+Roster/mode changes, clock regression, or a large mismatch between elapsed wall time and game time require another explicit attachment. Deaths and item changes do not reset state; temporary disconnects retain selections. The roster fingerprint is not a match ID, so game boundaries and game end cannot be identified perfectly. Long pauses may also require confirmation. There is no automatic augment reset or automatic Mayhem detection.
+
+Validation combines simulated normalization/access/transport fixtures with local endpoint and production-browser smoke checks. Actual Mayhem mode identifiers, augment visibility, transformed item coverage, temporary stat effects, disconnects and end-of-game behavior still require a running Mayhem match. The available live game during investigation reported `CLASSIC` on Map11 and is deliberately refused by the sync route. Existing item eligibility, recommendation provider settings and ranking remain unchanged.
+
 ## Refresh the snapshot
 
 Node.js 20.9 or newer is the only runtime requirement.

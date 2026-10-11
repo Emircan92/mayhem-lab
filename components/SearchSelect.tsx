@@ -49,6 +49,7 @@ export function SearchSelect({
   }, [excludeIds, options, query]);
 
   function choose(option: SearchOption) {
+    if (disabled) return;
     onSelect(option.id);
     setQuery("");
     setOpen(false);
@@ -99,7 +100,7 @@ export function SearchSelect({
           }
         }}
       />
-      {open ? (
+      {open && !disabled ? (
         <div className="search-results" id={`${inputId}-listbox`} role="listbox">
           {matches.length ? (
             matches.map((option, index) => (

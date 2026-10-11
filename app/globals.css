@@ -163,6 +163,17 @@ h1 {
   gap: 12px;
 }
 
+.live-sync { margin-bottom: 14px; }
+.live-sync-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.live-sync-heading label { display: flex; gap: 9px; align-items: center; font-weight: 700; }
+.live-sync-heading strong { color: var(--accent); text-transform: capitalize; font-size: 13px; }
+.live-sync p, .live-sync li, .live-sync small { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.live-sync p { margin: 7px 0; }
+.live-attachment { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 7px; }
+.live-attachment button { margin: 5px 0 8px; }
+.unknown-item { border-color: var(--danger); color: var(--danger); }
+button:disabled, input:disabled { cursor: default; opacity: 0.65; }
+
 .panel {
   position: relative;
   padding: 15px;

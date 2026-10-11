@@ -7,9 +7,9 @@
     "data:refresh": "node scripts/refresh-data.mjs",
     "calibrate:volibear": "node scripts/run-calibration.mjs data/calibration/volibear-dropkick.json",
     "measure:item-payload": "tsx scripts/measure-item-payload.ts",
-    "dev": "next dev",
+    "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --hostname 127.0.0.1",
     "test": "node --test test/*.test.mjs && tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },

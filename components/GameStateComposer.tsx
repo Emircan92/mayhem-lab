@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Augment, Champion, Item } from "@/lib/catalog";
 import {
@@ -24,6 +24,8 @@ import type {
 } from "@/lib/recommendation/api-contract";
 import type { RecommendationResponse } from "@/lib/recommendation-contract";
 import { SearchSelect, type SearchOption } from "./SearchSelect";
+import { useLiveSync } from "./useLiveSync";
+import { isLiveFresh, LIVE_STALE_MS, liveRecommendationProblem, mergeLiveState, replaceOfferedAugment } from "@/lib/live-state";
 
 type GameStateComposerProps = {
   champions: Champion[];
@@ -125,7 +127,13 @@ function AugmentSummary({
 }
 
 export function GameStateComposer({ champions, augments, items, patch, generatedAt }: GameStateComposerProps) {
-  const [state, setState] = useState<ManualGameState>(createEmptyGameState);
+  const [manualState, setState] = useState<ManualGameState>(createEmptyGameState);
+  const manualRef = useRef(manualState);
+  manualRef.current = manualState;
+  const live = useLiveSync();
+  const state = useMemo(() => mergeLiveState(manualState, live.snapshot, live.fresh, live.now),
+    [manualState, live.snapshot, live.fresh, live.now]);
+  const recommendationEpoch = useRef(0);
   const [hydrated, setHydrated] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [recommendationUi, setRecommendationUi] = useState<RecommendationUiState>({ status: "idle" });
@@ -167,8 +175,14 @@ export function GameStateComposer({ champions, augments, items, patch, generated
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, serializeGameState(state, patch));
-  }, [hydrated, patch, state]);
+    window.localStorage.setItem(STORAGE_KEY, serializeGameState(manualState, patch));
+  }, [hydrated, patch, manualState]);
+
+  useEffect(() => {
+    recommendationEpoch.current++;
+    setRecommendationUi({ status: "idle" });
+    setRecommendationDebug(null);
+  }, [live.candidate !== null, live.enabled, manualState.ownedAugments, manualState.offeredAugments]);
 
   const championOptions = useMemo<SearchOption[]>(
     () =>
@@ -219,16 +233,14 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   }
 
   function setOfferedAugment(index: number, selection: SelectedAugment | null) {
-    setState((current) => {
-      const offeredAugments = [...current.offeredAugments] as ManualGameState["offeredAugments"];
-      offeredAugments[index] = selection;
-      return { ...current, offeredAugments };
-    });
+    setState((current) => replaceOfferedAugment(current, index, selection));
   }
 
   function resetGame() {
     if (hasGameState(state) && !window.confirm("Start a new game and clear the current state?")) return;
     window.localStorage.removeItem(STORAGE_KEY);
+    recommendationEpoch.current++;
+    live.resetSession();
     setState(createEmptyGameState());
     setRecommendationUi({ status: "idle" });
     setRecommendationDebug(null);
@@ -236,14 +248,29 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   }
 
   async function requestRecommendation(kind: "augment" | "item") {
+    const epoch = ++recommendationEpoch.current;
     setRecommendationUi({ status: "loading", kind });
     try {
+      let requestState = manualRef.current;
+      if (live.enabled) {
+        // Join any existing poll; never issue a second concurrent live request.
+        const latest = live.fresh && isLiveFresh(live.snapshot, Date.now()) ? live : await live.refresh();
+        if (epoch !== recommendationEpoch.current) return;
+        const attached = latest.enabled && latest.candidate === null && latest.status === "connected";
+        const problem = liveRecommendationProblem(latest.snapshot, attached, Date.now());
+        if (problem) {
+          setRecommendationUi({ status: "error", kind, message: problem });
+          return;
+        }
+        requestState = mergeLiveState(manualRef.current, latest.snapshot, true, Date.now());
+      }
       const response = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, state }),
+        body: JSON.stringify({ kind, state: requestState }),
       });
       const payload = (await response.json()) as RecommendationApiResponse;
+      if (epoch !== recommendationEpoch.current) return;
       if (!response.ok || !payload.ok) {
         const message = payload.ok ? "Recommendation failed." : payload.error.message;
         setRecommendationUi({ status: "error", kind, message });
@@ -252,6 +279,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
       setRecommendationDebug(payload.debug);
       setRecommendationUi({ status: "success", recommendation: payload.recommendation });
     } catch {
+      if (epoch !== recommendationEpoch.current) return;
       setRecommendationUi({
         status: "error",
         kind,
@@ -264,7 +292,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
     <main className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">ARAM MAYHEM · MANUAL STATE</p>
+          <p className="eyebrow">ARAM MAYHEM · {live.fresh ? "LIVE STATE" : "MANUAL STATE"}</p>
           <h1>Mayhem Lab</h1>
         </div>
         <div className="header-actions">
@@ -277,6 +305,31 @@ export function GameStateComposer({ champions, augments, items, patch, generated
           </button>
         </div>
       </header>
+
+      <section className="live-sync panel" aria-label="Live Sync">
+        <div className="live-sync-heading">
+          <label>
+            <input type="checkbox" checked={live.enabled} disabled={!hydrated}
+              onChange={(event) => live.setEnabled(event.target.checked)} />
+            Live Sync
+          </label>
+          <strong role="status">{live.enabled ? live.status : "Manual entry"}</strong>
+        </div>
+        <p>{live.enabled ? live.message : "Enable to import your champion, enemies, inventory and stats. Augments and crit stay manual."}</p>
+        {live.enabled ? <p>Disable Live Sync at any time to return to your saved manual fields.</p> : null}
+        {live.enabled && live.candidate ? (
+          <div className="live-attachment">
+            <p>Detected {championById.get(live.candidate.championId)?.name} · {live.candidate.gameMode} · {Math.floor(live.candidate.gameTime / 60)} min.</p>
+            <p>Confirm you are playing ARAM Mayhem and that the current {manualState.ownedAugments.length} owned augments and {manualState.offeredAugments.filter(Boolean).length} offers belong to this game. Otherwise use New Game first.</p>
+            <button className="secondary-button" type="button" onClick={live.attach}
+              disabled={live.status !== "waiting" || Date.now() - live.candidate.observedAt >= LIVE_STALE_MS}>
+              Confirm Mayhem and use current selections
+            </button>
+          </div>
+        ) : null}
+        {live.enabled && live.snapshot ? <small>Last observation: {new Date(live.snapshot.observedAt).toLocaleTimeString()}</small> : null}
+        {live.enabled && live.snapshot?.warnings.length ? <ul>{live.snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : null}
+      </section>
 
       {notice ? (
         <div className="notice" role="status">
@@ -306,6 +359,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
               <button
                 className="text-button"
                 type="button"
+                disabled={live.enabled}
                 onClick={() => setState((current) => ({ ...current, championId: undefined }))}
               >
                 Clear
@@ -314,6 +368,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
           ) : null}
           <SearchSelect
             label="Champion"
+            disabled={live.enabled}
             options={championOptions}
             placeholder={selectedChampion ? "Replace champion…" : "Search champion…"}
             onSelect={(championId) => setState((current) => ({ ...current, championId }))}
@@ -335,6 +390,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
                 <button
                   type="button"
                   className="chip"
+                  disabled={live.enabled}
                   key={id}
                   title={`Remove ${champion.name}`}
                   onClick={() =>
@@ -353,7 +409,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
             label="Enemy champion"
             options={championOptions}
             placeholder={state.enemyChampionIds.length < 5 ? "Add enemy champion…" : "Enemy team full"}
-            disabled={state.enemyChampionIds.length >= 5}
+            disabled={live.enabled || state.enemyChampionIds.length >= 5}
             excludeIds={enemyIds}
             onSelect={(championId) =>
               setState((current) => ({
@@ -465,6 +521,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
               return item ? (
                 <button
                   className="item-chip"
+                  disabled={live.enabled}
                   type="button"
                   key={`${id}-${index}`}
                   title={`Remove ${item.name}`}
@@ -476,17 +533,17 @@ export function GameStateComposer({ champions, augments, items, patch, generated
                   }
                 >
                   <span>{item.name}</span>
-                  <small>{item.gold.total}g</small>
+                  <small>{live.fresh ? `Slot ${(live.snapshot?.inventory[index]?.slot ?? index) + 1} · ` : ""}{item.gold.total}g{live.fresh && (live.snapshot?.inventory[index]?.count ?? 1) > 1 ? ` · ×${live.snapshot?.inventory[index]?.count}` : ""}</small>
                   <b>×</b>
                 </button>
-              ) : null;
+              ) : <div className="item-chip unknown-item" key={`unknown-${id}-${index}`}><span>Unknown item #{id}</span><small>Occupied slot {(live.snapshot?.inventory[index]?.slot ?? index) + 1}</small></div>;
             })}
           </div>
           <SearchSelect
             label="Current item"
             options={itemOptions}
             placeholder={state.itemIds.length < 6 ? "Search and add item…" : "Inventory full"}
-            disabled={state.itemIds.length >= 6}
+            disabled={live.enabled || state.itemIds.length >= 6}
             onSelect={(itemId) =>
               setState((current) => ({ ...current, itemIds: [...current.itemIds, itemId].slice(0, 6) }))
             }
@@ -507,6 +564,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
                 <span>{field.label}</span>
                 <input
                   type="number"
+                  disabled={live.enabled && field.key !== "critChance"}
                   min="0"
                   inputMode="decimal"
                   step={field.step ?? "1"}
