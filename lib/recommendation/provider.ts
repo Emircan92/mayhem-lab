@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { LengthFinishReasonError } from "openai/error";
+import { APIConnectionError, APIError, LengthFinishReasonError, OpenAIError } from "openai/error";
 import { zodTextFormat } from "openai/helpers/zod";
 import { ZodError } from "zod";
 
@@ -56,6 +56,56 @@ export type ProviderCompletion = {
 type CompletionParameters = Parameters<OpenAI["responses"]["parse"]>[0];
 type CompletionOptions = { maxRetries: number; timeout: number };
 export type CompletionRunner = (parameters: CompletionParameters, options?: CompletionOptions) => Promise<ProviderCompletion>;
+type ProviderErrorDiagnostic = {
+  category: "rate-limit" | "quota-exhaustion" | "authentication" | "invalid-request" | "connection"
+    | "upstream-server" | "provider-http" | "sdk-error" | "unknown-local" | "token-exhaustion" | "invalid-structured-output";
+  httpStatus: number | null;
+  code: string | null;
+  type: string | null;
+  requestId: string | null;
+};
+
+function providerErrorDiagnostic(error: unknown): ProviderErrorDiagnostic {
+  const diagnostic: ProviderErrorDiagnostic = {
+    category: error instanceof LengthFinishReasonError ? "token-exhaustion"
+      : error instanceof SyntaxError || error instanceof ZodError ? "invalid-structured-output"
+      : error instanceof APIConnectionError ? "connection" : error instanceof OpenAIError ? "sdk-error" : "unknown-local",
+    httpStatus: null, code: null, type: null, requestId: null,
+  };
+  if (!(error instanceof APIError)) return diagnostic;
+  let status: unknown, code: unknown, type: unknown, requestID: unknown;
+  try {
+    ({ status, code, type, requestID } = error);
+  } catch {
+    return diagnostic;
+  }
+
+  // Never copy arbitrary SDK fields: even codes and request IDs are untrusted strings.
+  const quotaCodes = ["insufficient_quota", "organization_spend_limit_exceeded",
+    "project_spend_limit_exceeded", "organization_usage_limit_exceeded"];
+  const codes = [...quotaCodes, "rate_limit_exceeded", "slow_down", "invalid_api_key", "invalid_request",
+    "invalid_json_schema", "model_not_found", "context_length_exceeded", "server_error", "server_is_overloaded"];
+  const types = ["insufficient_quota", "rate_limit_error", "authentication_error", "invalid_request_error",
+    "server_error", "service_unavailable_error"];
+  diagnostic.httpStatus = typeof status === "number" && Number.isInteger(status)
+    && status >= 400 && status <= 599 ? status : null;
+  diagnostic.code = typeof code === "string" && codes.includes(code) ? code : null;
+  diagnostic.type = typeof type === "string" && types.includes(type) ? type : null;
+  const id = requestID;
+  diagnostic.requestId = typeof id === "string" && id.startsWith("req_") && id.length > 4 && id.length <= 132
+    && !/[^A-Za-z0-9]/.test(id.slice(4)) ? id : null;
+  const httpStatus = diagnostic.httpStatus;
+  diagnostic.category = error instanceof APIConnectionError ? "connection"
+    : httpStatus === 429 && (quotaCodes.includes(diagnostic.code ?? "") || diagnostic.type === "insufficient_quota") ? "quota-exhaustion"
+    : httpStatus === 429 && (diagnostic.code === "rate_limit_exceeded" || diagnostic.code === "slow_down"
+      || diagnostic.type === "rate_limit_error") ? "rate-limit"
+    : httpStatus === 401 ? "authentication"
+    : httpStatus === 400 || httpStatus === 422 ? "invalid-request"
+    : httpStatus !== null && httpStatus >= 500 ? "upstream-server"
+    : httpStatus !== null ? "provider-http" : "sdk-error";
+  return diagnostic;
+}
+
 export type ProviderCompletionEvent = {
   event: "mayhem-recommendation-provider";
   kind: "item" | "augment";
@@ -71,6 +121,7 @@ export type ProviderCompletionEvent = {
   cachedInputTokens: number | null;
   totalTokens: number | null;
   elapsedMs: number;
+  errorDiagnostic?: ProviderErrorDiagnostic;
 };
 type ProviderOptions = {
   itemMaxOutputTokens?: number | string;
@@ -105,7 +156,7 @@ export class OpenAIRecommendationProvider implements RecommendationProvider {
   constructor(apiKey: string, model: string, options: ProviderOptions = {}) {
     const client = new OpenAI({ apiKey });
     this.complete = options.complete ?? ((parameters, requestOptions) => client.responses.parse(parameters, requestOptions));
-    this.log = options.log ?? ((event) => console.info("Mayhem provider completion", event));
+    this.log = options.log ?? ((event) => console.info("Mayhem provider completion", event.errorDiagnostic ? JSON.stringify(event) : event));
     this.itemBudget = options.itemMaxOutputTokens ?? process.env.MAYHEM_ITEM_MAX_OUTPUT_TOKENS;
     this.metadata = { provider: "openai", model };
   }
@@ -118,6 +169,7 @@ export class OpenAIRecommendationProvider implements RecommendationProvider {
       const started = Date.now();
       let response: ProviderCompletion | undefined;
       let classification: ProviderFailureClassification | null;
+      let errorDiagnostic: ProviderErrorDiagnostic | undefined;
       try {
         response = await this.complete({
           model: this.metadata.model,
@@ -129,6 +181,7 @@ export class OpenAIRecommendationProvider implements RecommendationProvider {
         }, request.kind === "item" ? { maxRetries: 0, timeout: 120_000 } : undefined);
         classification = completionFailure(response);
       } catch (error) {
+        errorDiagnostic = providerErrorDiagnostic(error);
         classification = error instanceof LengthFinishReasonError ? "token-exhaustion"
           : error instanceof SyntaxError || error instanceof ZodError ? "invalid-structured-output" : "provider-request";
       }
@@ -144,6 +197,7 @@ export class OpenAIRecommendationProvider implements RecommendationProvider {
         reasoningTokens: tokenCount(response?.usage?.output_tokens_details?.reasoning_tokens),
         cachedInputTokens: tokenCount(response?.usage?.input_tokens_details?.cached_tokens),
         totalTokens: tokenCount(response?.usage?.total_tokens), elapsedMs: Date.now() - started,
+        ...(errorDiagnostic ? { errorDiagnostic } : {}),
       });
       if (classification === null) return response!.output_parsed;
       if (attempt < attempts && (classification === "token-exhaustion" || classification === "incomplete-output")) continue;

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import OpenAI from "openai";
+import { APIConnectionError, APIConnectionTimeoutError, APIError, OpenAIError } from "openai/error";
 import augments from "../data/generated/16.19.1/augments.json";
 import champions from "../data/generated/16.19.1/champions.json";
 import items from "../data/generated/16.19.1/items.json";
@@ -46,6 +47,137 @@ function harness(responses: Array<ProviderCompletion | Error>, budget: string | 
   });
   return { provider, calls, events };
 }
+
+const sensitive = "offline-test-secret sensitive-content Volibear prompt headers body stack cause";
+function sdkError(status: number, code: unknown = null, type: unknown = null) {
+  return APIError.generate(status, { error: { message: sensitive, code, type, param: sensitive } }, undefined,
+    new Headers({ "x-request-id": "req_Offline123", authorization: sensitive, "x-private": sensitive }));
+}
+
+test("provider catch diagnoses SDK failures without changing request errors or retry policy", async () => {
+  const cases: Array<[Error, string, number | null, string | null, string | null]> = [
+    [sdkError(400, "invalid_json_schema", "invalid_request_error"), "invalid-request", 400, "invalid_json_schema", "invalid_request_error"],
+    [sdkError(422), "invalid-request", 422, null, null],
+    [sdkError(401, "invalid_api_key", "invalid_request_error"), "authentication", 401, "invalid_api_key", "invalid_request_error"],
+    [sdkError(429, "rate_limit_exceeded", "invalid_request_error"), "rate-limit", 429, "rate_limit_exceeded", "invalid_request_error"],
+    [sdkError(429, "slow_down", "rate_limit_error"), "rate-limit", 429, "slow_down", "rate_limit_error"],
+    [sdkError(429, null, "rate_limit_error"), "rate-limit", 429, null, "rate_limit_error"],
+    [sdkError(429, "insufficient_quota"), "quota-exhaustion", 429, "insufficient_quota", null],
+    [sdkError(429, null, "insufficient_quota"), "quota-exhaustion", 429, null, "insufficient_quota"],
+    [sdkError(429, "project_spend_limit_exceeded", "insufficient_quota"), "quota-exhaustion", 429, "project_spend_limit_exceeded", "insufficient_quota"],
+    [sdkError(429), "provider-http", 429, null, null],
+    [sdkError(403), "provider-http", 403, null, null],
+    [sdkError(404, "model_not_found", "invalid_request_error"), "provider-http", 404, "model_not_found", "invalid_request_error"],
+    [sdkError(500, "server_error", "server_error"), "upstream-server", 500, "server_error", "server_error"],
+    [sdkError(503, "server_is_overloaded", "service_unavailable_error"), "upstream-server", 503, "server_is_overloaded", "service_unavailable_error"],
+    [new APIConnectionError({ message: sensitive, cause: new Error(sensitive) }), "connection", null, null, null],
+    [new APIConnectionTimeoutError({ message: sensitive }), "connection", null, null, null],
+    [new OpenAIError(sensitive), "sdk-error", null, null, null],
+    [new Error(sensitive), "unknown-local", null, null, null],
+  ];
+  for (const [error, category, httpStatus, code, type] of cases) {
+    const { provider, calls, events } = harness([error, completed]);
+    await assert.rejects(runRecommendation(itemRequest, provider), (failure: unknown) =>
+      failure instanceof RecommendationProviderError && failure.classification === "provider-request"
+      && failure.message === "The model did not return a complete structured recommendation (provider-request)."
+      && failure.cause === undefined);
+    assert.equal(calls.length, 1);
+    assert.equal(events[0].status, "request-error");
+    assert.equal(events[0].classification, "provider-request");
+    assert.deepEqual(events[0].errorDiagnostic, {
+      category, httpStatus, code, type, requestId: error instanceof APIError && httpStatus !== null ? "req_Offline123" : null,
+    });
+    assert.doesNotMatch(JSON.stringify(events), /offline-test-secret|sensitive-content|Volibear|prompt|headers|body|stack|cause/);
+  }
+});
+
+test("SDK diagnostics reject unknown and malformed fields without serializing their contents", async () => {
+  const untrusted = { toJSON() { throw new Error("must never serialize SDK data"); },
+    toString() { throw new Error("must never coerce SDK data"); } };
+  for (const fields of [
+    { code: sensitive, type: sensitive, requestID: sensitive },
+    { code: "rate_limit_exceeded " + sensitive, type: "rate_limit_error\n" + sensitive, requestID: "req_Offline123\n" },
+    { code: untrusted, type: untrusted, requestID: untrusted },
+    { code: Symbol(sensitive), type: 42n, requestID: new String("req_Offline123") },
+    { code: ["rate_limit_exceeded"], type: ["insufficient_quota"], requestID: "req_" },
+    { requestID: "req_" + "A".repeat(129) },
+    { requestID: "req_A\r" },
+    { requestID: "req_A_B" },
+    { requestID: "req_é" },
+  ]) {
+    const error = Object.assign(sdkError(429), fields);
+    const { provider, events } = harness([error]);
+    await assert.rejects(runRecommendation(itemRequest, provider), RecommendationProviderError);
+    assert.deepEqual(events[0].errorDiagnostic, {
+      category: "provider-http", httpStatus: 429, code: null, type: null, requestId: null,
+    });
+  }
+  for (const status of ["401", 429.5, NaN, Infinity, 200, 600, untrusted, 429n, null, undefined]) {
+    const { provider, events } = harness([Object.assign(sdkError(429), { status })]);
+    await assert.rejects(runRecommendation(itemRequest, provider), RecommendationProviderError);
+    assert.deepEqual(events[0].errorDiagnostic, {
+      category: "sdk-error", httpStatus: null, code: null, type: null, requestId: "req_Offline123",
+    });
+  }
+});
+
+test("non-SDK thrown values cannot impersonate SDK errors or supply diagnostic fields", async () => {
+  const forged = { name: "RateLimitError", status: 429, code: "insufficient_quota", type: "insufficient_quota",
+    requestID: "req_Offline123", message: sensitive, cause: sensitive };
+  for (const error of [null, undefined, 42, sensitive, forged, Object.assign(new Error(sensitive), forged)]) {
+    const events: ProviderCompletionEvent[] = [];
+    const provider = new OpenAIRecommendationProvider("offline-test-secret", "unchanged-configured-model", {
+      itemMaxOutputTokens: 8192, log: (event) => events.push(event), complete: async () => { throw error; },
+    });
+    await assert.rejects(runRecommendation(itemRequest, provider), RecommendationProviderError);
+    assert.deepEqual(events[0].errorDiagnostic, {
+      category: "unknown-local", httpStatus: null, code: null, type: null, requestId: null,
+    });
+    assert.doesNotMatch(JSON.stringify(events), /offline-test-secret|sensitive-content|Volibear|RateLimitError/);
+  }
+});
+
+test("SDK diagnostic fields are read once and throwing accessors do not replace the provider failure", async () => {
+  const error = sdkError(429, null, "rate_limit_error");
+  let reads = 0;
+  Object.defineProperty(error, "code", { get: () => ++reads === 1 ? "rate_limit_exceeded" : sensitive });
+  const { provider, events } = harness([error]);
+  await assert.rejects(runRecommendation(itemRequest, provider), RecommendationProviderError);
+  assert.equal(reads, 1);
+  assert.equal(events[0].errorDiagnostic?.code, "rate_limit_exceeded");
+  assert.doesNotMatch(JSON.stringify(events), /offline-test-secret|sensitive-content/);
+
+  const malformed = sdkError(429);
+  Object.defineProperty(malformed, "code", { get: () => { throw new Error(sensitive); } });
+  const fallback = harness([malformed]);
+  await assert.rejects(runRecommendation(itemRequest, fallback.provider), (failure: unknown) =>
+    failure instanceof RecommendationProviderError && failure.classification === "provider-request");
+  assert.deepEqual(fallback.events[0].errorDiagnostic, {
+    category: "sdk-error", httpStatus: null, code: null, type: null, requestId: null,
+  });
+});
+
+test("default provider logger emits JSON-serialized error diagnostics containing only safe fields", async (t) => {
+  const logs: unknown[][] = [];
+  t.mock.method(console, "info", (...args: unknown[]) => { logs.push(args); });
+  const error = Object.assign(sdkError(429, "insufficient_quota", "insufficient_quota"), {
+    cause: new Error(sensitive), body: sensitive, prompt: sensitive, apiKey: sensitive,
+    toJSON() { throw new Error("must never serialize the exception"); },
+  });
+  const provider = new OpenAIRecommendationProvider("offline-test-secret", "unchanged-configured-model", {
+    itemMaxOutputTokens: 8192, complete: async () => { throw error; },
+  });
+  await assert.rejects(runRecommendation(itemRequest, provider), RecommendationProviderError);
+  assert.equal(logs.length, 1);
+  assert.equal(logs[0].length, 2);
+  assert.equal(logs[0][0], "Mayhem provider completion");
+  assert.equal(typeof logs[0][1], "string");
+  const serialized = logs[0][1] as string;
+  assert.deepEqual(JSON.parse(serialized).errorDiagnostic, {
+    category: "quota-exhaustion", httpStatus: 429, code: "insufficient_quota", type: "insufficient_quota", requestId: "req_Offline123",
+  });
+  assert.doesNotMatch(serialized, /offline-test-secret|sensitive-content|Volibear|prompt|headers|body|stack|cause|apiKey|message/);
+});
 
 test("item token exhaustion retries once with a larger bounded budget and succeeds through strict validation", async () => {
   const { provider, calls, events } = harness([exhausted, completed]);
