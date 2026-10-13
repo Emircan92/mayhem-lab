@@ -7,6 +7,7 @@ import {
   createEmptyGameState,
   hasGameState,
   parseStoredGameState,
+  recordOfferedAugment,
   serializeGameState,
   STORAGE_KEY,
   type AbilityContext,
@@ -26,6 +27,7 @@ import type { RecommendationResponse } from "@/lib/recommendation-contract";
 import { SearchSelect, type SearchOption } from "./SearchSelect";
 import { useLiveSync } from "./useLiveSync";
 import { isLiveFresh, LIVE_STALE_MS, liveRecommendationProblem, mergeLiveState, replaceOfferedAugment } from "@/lib/live-state";
+import { RecommendationRequestLifecycle, recommendationStateKey } from "@/lib/recommendation/request-lifecycle";
 
 type GameStateComposerProps = {
   champions: Champion[];
@@ -55,6 +57,7 @@ const STAT_FIELDS: Array<{
 
 type RecommendationUiState =
   | { status: "idle" }
+  | { status: "outdated" }
   | { status: "loading"; kind: "augment" | "item" }
   | { status: "success"; recommendation: RecommendationResponse }
   | { status: "error"; kind: "augment" | "item"; message: string };
@@ -98,11 +101,13 @@ function AugmentSummary({
   selected,
   onContextChange,
   onRemove,
+  onRecord,
 }: {
   augment: Augment;
   selected: SelectedAugment;
   onContextChange: (value?: AbilityContext) => void;
   onRemove: () => void;
+  onRecord?: () => void;
 }) {
   return (
     <article className={`augment-card rarity-${augment.rarity}`}>
@@ -122,22 +127,45 @@ function AugmentSummary({
       {augment.requiresAbilityContext ? (
         <AbilityContextPicker value={selected.abilityContext} onChange={onContextChange} />
       ) : null}
+      {onRecord ? (
+        <button className="secondary-button" type="button" aria-label={`Record ${augment.name} as owned`} onClick={onRecord}>
+          Record this pick
+        </button>
+      ) : null}
     </article>
   );
 }
 
 export function GameStateComposer({ champions, augments, items, patch, generatedAt }: GameStateComposerProps) {
-  const [manualState, setState] = useState<ManualGameState>(createEmptyGameState);
+  const [manualState, setManualState] = useState<ManualGameState>(createEmptyGameState);
   const manualRef = useRef(manualState);
-  manualRef.current = manualState;
   const live = useLiveSync();
   const state = useMemo(() => mergeLiveState(manualState, live.snapshot, live.fresh, live.now),
     [manualState, live.snapshot, live.fresh, live.now]);
-  const recommendationEpoch = useRef(0);
+  const lifecycle = useRef(new RecommendationRequestLifecycle());
+  const materialKey = recommendationStateKey(manualState, live);
   const [hydrated, setHydrated] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [recommendationUi, setRecommendationUi] = useState<RecommendationUiState>({ status: "idle" });
   const [recommendationDebug, setRecommendationDebug] = useState<RecommendationApiSuccess["debug"] | null>(null);
+  const [requestPending, setRequestPending] = useState(false);
+
+  function currentMaterialKey() {
+    return recommendationStateKey(manualRef.current, live.getCurrent());
+  }
+
+  function invalidateRecommendation() {
+    setRecommendationUi((current) => current.status === "idle" ? current : { status: "outdated" });
+    setRecommendationDebug(null);
+  }
+
+  // Update the ref synchronously so back-to-back edits/picks cannot use old state.
+  function setState(update: ManualGameState | ((current: ManualGameState) => ManualGameState)) {
+    const next = typeof update === "function" ? update(manualRef.current) : update;
+    manualRef.current = next;
+    if (lifecycle.current.observe(currentMaterialKey())) invalidateRecommendation();
+    setManualState(next);
+  }
 
   const championById = useMemo(() => new Map(champions.map((entry) => [entry.id, entry])), [champions]);
   const augmentById = useMemo(() => new Map(augments.map((entry) => [entry.id, entry])), [augments]);
@@ -179,10 +207,8 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   }, [hydrated, patch, manualState]);
 
   useEffect(() => {
-    recommendationEpoch.current++;
-    setRecommendationUi({ status: "idle" });
-    setRecommendationDebug(null);
-  }, [live.candidate !== null, live.enabled, manualState.ownedAugments, manualState.offeredAugments]);
+    if (lifecycle.current.observe(materialKey)) invalidateRecommendation();
+  }, [materialKey]);
 
   const championOptions = useMemo<SearchOption[]>(
     () =>
@@ -236,10 +262,25 @@ export function GameStateComposer({ champions, augments, items, patch, generated
     setState((current) => replaceOfferedAugment(current, index, selection));
   }
 
+  function recordPick(index: number) {
+    setState((current) => recordOfferedAugment(current, index));
+  }
+
+  function recommendedPickAction(augmentId: number) {
+    const index = state.offeredAugments.findIndex((entry) => entry?.augmentId === augmentId);
+    if (index < 0 || ownedIds.has(augmentId)) return null;
+    return (
+      <button className="secondary-button" type="button"
+        aria-label={`Record ${augmentById.get(augmentId)?.name} as owned`} onClick={() => recordPick(index)}>
+        Record this pick
+      </button>
+    );
+  }
+
   function resetGame() {
     if (hasGameState(state) && !window.confirm("Start a new game and clear the current state?")) return;
     window.localStorage.removeItem(STORAGE_KEY);
-    recommendationEpoch.current++;
+    lifecycle.current.reset();
     live.resetSession();
     setState(createEmptyGameState());
     setRecommendationUi({ status: "idle" });
@@ -248,14 +289,18 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   }
 
   async function requestRecommendation(kind: "augment" | "item") {
-    const epoch = ++recommendationEpoch.current;
+    // Acquire before any state update or await: React loading state is not a lock.
+    const token = lifecycle.current.start(currentMaterialKey());
+    if (!token) return;
+    setRequestPending(true);
     setRecommendationUi({ status: "loading", kind });
+    setRecommendationDebug(null);
     try {
       let requestState = manualRef.current;
       if (live.enabled) {
         // Join any existing poll; never issue a second concurrent live request.
         const latest = live.fresh && isLiveFresh(live.snapshot, Date.now()) ? live : await live.refresh();
-        if (epoch !== recommendationEpoch.current) return;
+        if (!lifecycle.current.isCurrent(token, currentMaterialKey())) return;
         const attached = latest.enabled && latest.candidate === null && latest.status === "connected";
         const problem = liveRecommendationProblem(latest.snapshot, attached, Date.now());
         if (problem) {
@@ -270,7 +315,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
         body: JSON.stringify({ kind, state: requestState }),
       });
       const payload = (await response.json()) as RecommendationApiResponse;
-      if (epoch !== recommendationEpoch.current) return;
+      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) return;
       if (!response.ok || !payload.ok) {
         const message = payload.ok ? "Recommendation failed." : payload.error.message;
         setRecommendationUi({ status: "error", kind, message });
@@ -279,12 +324,16 @@ export function GameStateComposer({ champions, augments, items, patch, generated
       setRecommendationDebug(payload.debug);
       setRecommendationUi({ status: "success", recommendation: payload.recommendation });
     } catch {
-      if (epoch !== recommendationEpoch.current) return;
+      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) return;
       setRecommendationUi({
         status: "error",
         kind,
         message: "Could not reach the local recommendation endpoint. Check the dev server and retry.",
       });
+    } finally {
+      lifecycle.current.finish(token);
+      setRequestPending(false);
+      setRecommendationUi((current) => current.status === "loading" ? { status: "outdated" } : current);
     }
   }
 
@@ -490,6 +539,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
                         setOfferedAugment(index, { ...selection, abilityContext })
                       }
                       onRemove={() => setOfferedAugment(index, null)}
+                      onRecord={ownedIds.has(augment.id) ? undefined : () => recordPick(index)}
                     />
                   ) : (
                     <div className="empty-offer">Empty slot</div>
@@ -594,7 +644,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
         <div className="action-buttons">
           <button
             type="button"
-            disabled={recommendationUi.status === "loading"}
+            disabled={!hydrated || requestPending}
             onClick={() => requestRecommendation("augment")}
           >
             {recommendationUi.status === "loading" && recommendationUi.kind === "augment"
@@ -603,7 +653,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
           </button>
           <button
             type="button"
-            disabled={recommendationUi.status === "loading"}
+            disabled={!hydrated || requestPending}
             onClick={() => requestRecommendation("item")}
           >
             {recommendationUi.status === "loading" && recommendationUi.kind === "item"
@@ -613,13 +663,23 @@ export function GameStateComposer({ champions, augments, items, patch, generated
         </div>
       </footer>
 
+      {recommendationUi.status === "outdated" ? (
+        <p className="notice" role="status">
+          Game state changed. Request a new recommendation.
+          {requestPending ? " The previous request is still finishing." : ""}
+        </p>
+      ) : null}
+      {requestPending && recommendationUi.status === "idle" ? (
+        <p className="notice" role="status">The previous request is still finishing.</p>
+      ) : null}
+
       {recommendationUi.status === "error" ? (
         <section className="recommendation-error" role="alert">
           <div>
             <strong>Recommendation unavailable</strong>
             <p>{recommendationUi.message}</p>
           </div>
-          <button type="button" onClick={() => requestRecommendation(recommendationUi.kind)}>
+          <button type="button" disabled={requestPending} onClick={() => requestRecommendation(recommendationUi.kind)}>
             Retry
           </button>
         </section>
@@ -637,6 +697,8 @@ export function GameStateComposer({ champions, augments, items, patch, generated
             </b>
           </div>
           <p className="primary-reason">{recommendationUi.recommendation.primary.reason}</p>
+          {recommendationUi.recommendation.kind === "augment"
+            ? recommendedPickAction(recommendationUi.recommendation.primary.id) : null}
           {recommendationUi.recommendation.alternatives.length ? (
             <div className="recommendation-alternatives">
               {recommendationUi.recommendation.alternatives.map((alternative) => (
@@ -644,6 +706,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
                   <strong>{alternative.name}</strong>
                   <p>{alternative.reason}</p>
                   {alternative.preferWhen ? <small>Prefer when: {alternative.preferWhen}</small> : null}
+                  {recommendationUi.recommendation.kind === "augment" ? recommendedPickAction(alternative.id) : null}
                 </article>
               ))}
             </div>

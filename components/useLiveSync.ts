@@ -110,6 +110,7 @@ export function useLiveSync() {
   const attached = sync.enabled && !sync.candidate && sync.snapshot !== null;
   const fresh = attached && sync.status === "connected" && isLiveFresh(sync.snapshot, now);
   return { ...sync, now, attached, fresh, refresh, setEnabled, resetSession, attach,
+    getCurrent: () => current.current,
     status: attached && !isLiveFresh(sync.snapshot, now) ? "stale" as const : sync.status,
     message: attached && !isLiveFresh(sync.snapshot, now)
       ? "Live observations are stale. Manual values are shown; refresh or disable Live Sync before requesting a recommendation."

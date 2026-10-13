@@ -60,6 +60,16 @@ export function createEmptyGameState(): ManualGameState {
   };
 }
 
+export function recordOfferedAugment(state: ManualGameState, index: number): ManualGameState {
+  const selected = state.offeredAugments[index];
+  if (!selected || state.ownedAugments.some((entry) => entry.augmentId === selected.augmentId)) return state;
+  return {
+    ...state,
+    ownedAugments: [...state.ownedAugments, { ...selected }],
+    offeredAugments: [null, null, null],
+  };
+}
+
 function selectedAugment(value: unknown, validIds: ReadonlySet<number>): SelectedAugment | null {
   if (!value || typeof value !== "object") return null;
   const candidate = value as Record<string, unknown>;

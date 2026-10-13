@@ -20,7 +20,9 @@ export function itemCandidateExclusion(item: Item): ItemCandidateExclusion | nul
   if (!item.name.trim() || OBVIOUS_INTERNAL_NAME.test(item.name)) return "unnamed-or-internal";
   if (!item.purchasable) return "not-purchasable";
   if (!item.mapIds.includes(ARAM_MAP_ID)) return "not-available-on-aram";
-  if (item.into.length > 0) return "component";
+  // Ordinary tier-two boots can link to unavailable later upgrades.
+  const completedBootRecipe = item.tags.includes("Boots") && item.from.includes(1001);
+  if (item.into.length > 0 && !completedBootRecipe) return "component";
   if (item.tags.includes("Lane") && item.from.length === 0) return "starter";
   if (item.tags.some((tag) => NON_ITEM_TAGS.has(tag))) return "non-item-category";
   if (item.gold.total <= 0) return "no-positive-price";
