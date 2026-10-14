@@ -22,6 +22,12 @@ Server completion telemetry records request kind, configured model, attempt, out
 
 Expand **Recommendation debug** below the page to inspect the normalized snapshot, the exact candidate-constrained request, provider/model label, and locally validated structured response. Provider credentials are server-only and are never included in this panel.
 
+## Local session diagnostics V1
+
+Use **Start recording** before a game, then **Stop recording** and **Export Session Diagnostics** to download one self-contained JSON file. Recording is opt-in, local to the browser and survives ordinary refresh. It captures manual input and augment-slot/ownership changes, meaningful Live Sync observations/errors, authoritative recommendation snapshots/candidates/results, and safe correlated server provider timing/token/error diagnostics. Nothing is automatically uploaded and recording makes no extra model requests.
+
+One recording is kept, bounded to 2000 events, 80 requests and 4 MiB compact JSON; capture stops at a limit. Export before **Discard recording** to start another. A dropped HTTP response cannot recover server diagnostics. Request/provider timings do not measure gameplay interruption. See [the schema, event list, privacy/retention details, limitations and example export](docs/SESSION_DIAGNOSTICS_V1.md).
+
 ## Live Sync V1
 
 The dev and production start scripts bind to `127.0.0.1`. Opt in using **Live Sync** while a game is running, then explicitly confirm that it is your current **ARAM Mayhem** game and that any saved augments/offers belong to it. Use **New Game** first if those selections belong to a previous game. Map12 is a compatibility check, not proof of Mayhem; queue/mode identity remains user-confirmed.

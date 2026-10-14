@@ -28,6 +28,7 @@ import { SearchSelect, type SearchOption } from "./SearchSelect";
 import { useLiveSync } from "./useLiveSync";
 import { isLiveFresh, LIVE_STALE_MS, liveRecommendationProblem, mergeLiveState, replaceOfferedAugment } from "@/lib/live-state";
 import { RecommendationRequestLifecycle, recommendationStateKey } from "@/lib/recommendation/request-lifecycle";
+import { SessionRecorder } from "@/lib/diagnostics/recorder";
 
 type GameStateComposerProps = {
   champions: Champion[];
@@ -137,6 +138,11 @@ function AugmentSummary({
 }
 
 export function GameStateComposer({ champions, augments, items, patch, generatedAt }: GameStateComposerProps) {
+  const [, recordingChanged] = useState(0);
+  const recorderRef = useRef<SessionRecorder | null>(null);
+  if (!recorderRef.current) recorderRef.current = new SessionRecorder({ changed: () => recordingChanged((n) => n + 1) });
+  const recorder = recorderRef.current;
+  const displayRequestId = useRef<string | undefined>(undefined);
   const [manualState, setManualState] = useState<ManualGameState>(createEmptyGameState);
   const manualRef = useRef(manualState);
   const live = useLiveSync();
@@ -162,8 +168,12 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   // Update the ref synchronously so back-to-back edits/picks cannot use old state.
   function setState(update: ManualGameState | ((current: ManualGameState) => ManualGameState)) {
     const next = typeof update === "function" ? update(manualRef.current) : update;
+    recorder.observeManual(manualRef.current, next);
     manualRef.current = next;
-    if (lifecycle.current.observe(currentMaterialKey())) invalidateRecommendation();
+    if (lifecycle.current.observe(currentMaterialKey())) {
+      recorder.materialChangePending();
+      invalidateRecommendation();
+    }
     setManualState(next);
   }
 
@@ -198,6 +208,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
 
   useEffect(() => {
     setState(parseStoredGameState(window.localStorage.getItem(STORAGE_KEY), catalogIds));
+    try { recorder.recover(window.localStorage); } catch { /* storage may be disabled */ }
     setHydrated(true);
   }, [catalogIds]);
 
@@ -207,8 +218,35 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   }, [hydrated, patch, manualState]);
 
   useEffect(() => {
-    if (lifecycle.current.observe(materialKey)) invalidateRecommendation();
+    if (lifecycle.current.observe(materialKey)) {
+      recorder.materialChangePending();
+      invalidateRecommendation();
+    }
   }, [materialKey]);
+
+  useEffect(() => { recorder.observeLive(live); }, [live.enabled, live.attached, live.status, live.snapshot, live.candidate, live.diagnostic]);
+  useEffect(() => {
+    if (recommendationUi.status === "success") recorder.disposition(displayRequestId.current, "displayed");
+  }, [recommendationUi]);
+  useEffect(() => {
+    const save = () => recorder.flush();
+    const visibility = () => { if (document.visibilityState === "hidden") save(); };
+    window.addEventListener("pagehide", save);
+    document.addEventListener("visibilitychange", visibility);
+    return () => { save(); window.removeEventListener("pagehide", save); document.removeEventListener("visibilitychange", visibility); };
+  }, []);
+
+  function exportDiagnostics() {
+    try {
+      const bundle = recorder.exportBundle();
+      if (!bundle) return;
+      const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }));
+      const link = document.createElement("a");
+      link.href = url; link.download = `mayhem-diagnostics-${bundle.sessionId}.json`; link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setNotice(`Exported ${bundle.recommendations.length} requests, ${bundle.summary.failedRequests} failures. Average request latency: ${bundle.summary.averageRequestLatencyMs === null ? "unavailable" : Math.round(bundle.summary.averageRequestLatencyMs) + " ms"}.`);
+    } catch { setNotice("Diagnostics could not be exported. Gameplay remains available."); }
+  }
 
   const championOptions = useMemo<SearchOption[]>(
     () =>
@@ -280,6 +318,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   function resetGame() {
     if (hasGameState(state) && !window.confirm("Start a new game and clear the current state?")) return;
     window.localStorage.removeItem(STORAGE_KEY);
+    recorder.newGame();
     lifecycle.current.reset();
     live.resetSession();
     setState(createEmptyGameState());
@@ -291,7 +330,9 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   async function requestRecommendation(kind: "augment" | "item") {
     // Acquire before any state update or await: React loading state is not a lock.
     const token = lifecycle.current.start(currentMaterialKey());
-    if (!token) return;
+    if (!token) { recorder.event("recommendation-overlap-prevented", { kind }); return; }
+    const diagnosticRequestId = recorder.requested(kind);
+    const requestStarted = Date.now();
     setRequestPending(true);
     setRecommendationUi({ status: "loading", kind });
     setRecommendationDebug(null);
@@ -300,31 +341,43 @@ export function GameStateComposer({ champions, augments, items, patch, generated
       if (live.enabled) {
         // Join any existing poll; never issue a second concurrent live request.
         const latest = live.fresh && isLiveFresh(live.snapshot, Date.now()) ? live : await live.refresh();
-        if (!lifecycle.current.isCurrent(token, currentMaterialKey())) return;
+        if (!lifecycle.current.isCurrent(token, currentMaterialKey())) {
+          recorder.failed(diagnosticRequestId, "live-preflight", Date.now() - requestStarted);
+          recorder.disposition(diagnosticRequestId, "stale"); return;
+        }
         const attached = latest.enabled && latest.candidate === null && latest.status === "connected";
         const problem = liveRecommendationProblem(latest.snapshot, attached, Date.now());
         if (problem) {
+          recorder.failed(diagnosticRequestId, "live-preflight", Date.now() - requestStarted);
           setRecommendationUi({ status: "error", kind, message: problem });
           return;
         }
         requestState = mergeLiveState(manualRef.current, latest.snapshot, true, Date.now());
       }
+      recorder.submitted(diagnosticRequestId, requestState);
       const response = await fetch("/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, state: requestState }),
+        body: JSON.stringify({ kind, state: requestState, ...(diagnosticRequestId ? { diagnosticRequestId } : {}) }),
       });
       const payload = (await response.json()) as RecommendationApiResponse;
-      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) return;
+      recorder.completed(diagnosticRequestId, payload, response.status, Date.now() - requestStarted);
+      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) {
+        recorder.disposition(diagnosticRequestId, "stale"); return;
+      }
       if (!response.ok || !payload.ok) {
         const message = payload.ok ? "Recommendation failed." : payload.error.message;
         setRecommendationUi({ status: "error", kind, message });
         return;
       }
       setRecommendationDebug(payload.debug);
+      displayRequestId.current = diagnosticRequestId;
       setRecommendationUi({ status: "success", recommendation: payload.recommendation });
     } catch {
-      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) return;
+      recorder.failed(diagnosticRequestId, "network", Date.now() - requestStarted);
+      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) {
+        recorder.disposition(diagnosticRequestId, "stale"); return;
+      }
       setRecommendationUi({
         status: "error",
         kind,
@@ -354,6 +407,22 @@ export function GameStateComposer({ champions, augments, items, patch, generated
           </button>
         </div>
       </header>
+
+      <section className="live-sync panel" aria-label="Local session diagnostics">
+        <div className="live-sync-heading">
+          <strong role="status">{recorder.active ? "● " : ""}{recorder.status}</strong>
+          {!recorder.hasRecording ? <button className="secondary-button" type="button" disabled={!hydrated || requestPending}
+            onClick={() => recorder.start(manualRef.current, { patch, generatedAt }, live)}>Start recording</button> : null}
+          {recorder.active ? <button className="secondary-button" type="button" onClick={() => recorder.stop()}>Stop recording</button> : null}
+          {recorder.hasRecording ? <>
+            <button className="secondary-button" type="button" onClick={exportDiagnostics}>Export Session Diagnostics</button>
+            <button className="text-button" type="button" onClick={() => {
+              if (!recorder.discard()) setNotice("Recording cleared from memory, but browser storage refused deletion. Remove this site's stored data to finish discarding it.");
+            }}>Discard recording</button>
+          </> : null}
+        </div>
+        <small>Opt-in · stored only in this browser · no automatic uploads. One recording, up to 2000 events, 80 requests or 4 MiB; capture stops at a limit. Export before discarding to start another recording.</small>
+      </section>
 
       <section className="live-sync panel" aria-label="Live Sync">
         <div className="live-sync-heading">

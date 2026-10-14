@@ -2,8 +2,11 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import type { Champion, Item } from "../catalog";
 import type { LiveSnapshot } from "../live-state";
+import type { LiveDiagnostic } from "../diagnostics/schema";
 
-export class LiveDataError extends Error {}
+export class LiveDataError extends Error {
+  constructor(message: string, readonly diagnostic: LiveDiagnostic = { category: "normalization" }) { super(message); }
+}
 
 const identity = {
   riotId: z.string().min(1).optional(),
@@ -57,7 +60,11 @@ export function normalizeLiveState(
   const championByKey = new Map(catalog.champions.map((champion) => [`game_character_displayname_${champion.key}`, champion.id]));
   function championId(player: typeof local) {
     const id = championByKey.get(player.rawChampionName);
-    if (id === undefined) throw new LiveDataError("A live champion key is missing from the bundled catalog.");
+    if (id === undefined) throw new LiveDataError("A live champion key is missing from the bundled catalog.", {
+      category: "unknown-champion", role: player === local ? "local-player" : "enemy",
+      // Retain the exact identity, never the player object or account identifiers.
+      ...(player.rawChampionName.length <= 512 ? { rawChampionName: player.rawChampionName } : {}),
+    });
     return id;
   }
   const enemyChampionIds = players.filter((player) => player.team !== local.team).map(championId);

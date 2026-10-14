@@ -17,7 +17,7 @@ export type LiveSnapshot = {
 
 export type LiveStateResponse =
   | { ok: true; snapshot: LiveSnapshot }
-  | { ok: false; status: "waiting" | "unavailable"; message: string };
+  | { ok: false; status: "waiting" | "unavailable"; message: string; diagnostic?: import("./diagnostics/schema").LiveDiagnostic };
 
 export function isLiveFresh(snapshot: LiveSnapshot | null, now: number): snapshot is LiveSnapshot {
   return snapshot !== null && now >= snapshot.observedAt && now - snapshot.observedAt < LIVE_STALE_MS;

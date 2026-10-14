@@ -11,7 +11,7 @@ const selectedAugmentSchema = z.object({
 
 const optionalStat = z.number().finite().nonnegative().optional();
 
-const manualGameStateSchema = z.object({
+export const manualGameStateSchema = z.object({
   championId: z.number().int().optional(),
   ownedAugments: z.array(selectedAugmentSchema).max(32),
   offeredAugments: z.tuple([
@@ -44,6 +44,7 @@ const manualGameStateSchema = z.object({
 export const recommendationApiInputSchema = z.object({
   kind: z.enum(["augment", "item"]),
   state: manualGameStateSchema,
+  diagnosticRequestId: z.string().uuid().optional(),
 });
 
 export type RecommendationApiInput = {
@@ -58,10 +59,12 @@ export type RecommendationApiSuccess = {
     request: RecommendationRequest;
     provider: ProviderMetadata;
   };
+  diagnostics?: import("../diagnostics/schema").ServerDiagnostics;
 };
 
 export type RecommendationApiFailure = {
   ok: false;
+  diagnostics?: import("../diagnostics/schema").ServerDiagnostics;
   error: {
     code: "INVALID_REQUEST" | "NOT_CONFIGURED" | "PROVIDER_ERROR" | "INVALID_MODEL_RESPONSE";
     message: string;

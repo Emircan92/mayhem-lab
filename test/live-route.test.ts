@@ -99,6 +99,22 @@ test("upstream redirects, malformed JSON and oversized responses fail closed", a
   await assert.rejects(readLiveEndpoint("game"), /size limit/);
 });
 
+test("unknown champion failures return exact key, role and catalog patch without roster identities", async (t) => {
+  let index = 0;
+  upstream(t, (options) => {
+    const roster = players.map((p, i) => i === index ? { ...p, rawChampionName: "game_character_displayname_UnknownCASE" } : p);
+    return { body: JSON.stringify(options.path?.endsWith("activeplayer") ? active
+      : options.path?.endsWith("playerlist") ? roster : { gameTime: 120, gameMode: "ARAM", mapNumber: 12 }) };
+  });
+  for (index of [0, 6]) {
+    const response = await (await GET(localRequest())).json();
+    assert.equal(response.ok, false);
+    assert.deepEqual(response.diagnostic, { category: "unknown-champion", role: index ? "enemy" : "local-player",
+      rawChampionName: "game_character_displayname_UnknownCASE", patch: "16.19.1" });
+    assert.doesNotMatch(JSON.stringify(response), /Local#TAG|Player|riotId|stack/);
+  }
+});
+
 test("an unresponsive upstream is aborted by the absolute request deadline", async (t) => {
   upstream(t, () => ({ hang: true }));
   // A ref'ed timer keeps this simulated socket alive, as a real socket would.

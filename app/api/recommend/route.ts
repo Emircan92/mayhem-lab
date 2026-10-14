@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import augmentsSnapshot from "@/data/generated/16.19.1/augments.json";
 import championsSnapshot from "@/data/generated/16.19.1/champions.json";
@@ -18,6 +19,7 @@ import {
   runRecommendation,
 } from "@/lib/recommendation/service";
 import { SnapshotNormalizationError } from "@/lib/preprocess-game-state";
+import { attemptSchema, requestEvidenceSchema, serverDiagnosticsSchema, type ServerDiagnostics } from "@/lib/diagnostics/schema";
 
 const catalog = {
   champions: championsSnapshot.champions as Champion[],
@@ -42,6 +44,7 @@ function failure(
 }
 
 export async function POST(httpRequest: Request) {
+  const started = Date.now();
   let body: unknown;
   try {
     body = await httpRequest.json();
@@ -51,12 +54,31 @@ export async function POST(httpRequest: Request) {
 
   const parsed = recommendationApiInputSchema.safeParse(body);
   if (!parsed.success) {
+    const correlation = z.object({ diagnosticRequestId: z.string().uuid() }).safeParse(body);
+    if (correlation.success) return NextResponse.json<RecommendationApiFailure>({ ok: false,
+      error: { code: "INVALID_REQUEST", message: "Recommendation state is malformed." },
+      diagnostics: { requestId: correlation.data.diagnosticRequestId, elapsedMs: Date.now() - started, attempts: [], outcome: "INVALID_REQUEST" },
+    }, { status: 400, headers: { "Cache-Control": "no-store" } });
     return failure(
       400,
       "INVALID_REQUEST",
       "Recommendation state is malformed.",
       parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`),
     );
+  }
+
+  const requestId = parsed.data.diagnosticRequestId;
+  const diagnostics: ServerDiagnostics | undefined = requestId
+    ? { requestId, elapsedMs: 0, attempts: [], outcome: "success" } : undefined;
+  function capture(outcome: ServerDiagnostics["outcome"]) {
+    if (!diagnostics) return undefined;
+    try { return serverDiagnosticsSchema.parse({ ...diagnostics, outcome, elapsedMs: Date.now() - started }); }
+    catch { return undefined; }
+  }
+  function diagnosticFailure(status: number, code: RecommendationApiFailure["error"]["code"], message: string, details?: string[]) {
+    return NextResponse.json<RecommendationApiFailure>({ ok: false,
+      error: { code, message, ...(details ? { details } : {}) }, diagnostics: capture(code),
+    }, { status, headers: { "Cache-Control": "no-store" } });
   }
 
   try {
@@ -67,20 +89,30 @@ export async function POST(httpRequest: Request) {
       metadata,
       catalog.items,
     );
-    const provider = configuredRecommendationProvider();
+    if (diagnostics) {
+      try { diagnostics.evidence = requestEvidenceSchema.parse(request); } catch { diagnostics.captureIncomplete = true; }
+    }
+    const provider = configuredRecommendationProvider(diagnostics ? (event) => {
+      const safe = attemptSchema.safeParse(event);
+      if (safe.success && diagnostics.attempts.length < 2) diagnostics.attempts.push(safe.data);
+      else diagnostics.captureIncomplete = true;
+    } : undefined);
+    if (diagnostics) diagnostics.provider = provider.metadata;
     const result = await runRecommendation(request, provider);
     return NextResponse.json<RecommendationApiSuccess>({
       ok: true,
       recommendation: result.recommendation,
       debug: { request: result.request, provider: result.provider },
-    });
+      diagnostics: capture("success"),
+    }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (error instanceof RecommendationRequestError || error instanceof SnapshotNormalizationError) {
-      return failure(400, "INVALID_REQUEST", error.message);
+      return diagnosticFailure(400, "INVALID_REQUEST", error.message);
     }
     if (error instanceof InvalidModelResponseError) {
+      if (diagnostics) diagnostics.failureClassification = "invalid-recommendation";
       console.error("Mayhem recommendation response rejected", { classification: "invalid-recommendation", issueCount: error.issues.length });
-      return failure(
+      return diagnosticFailure(
         502,
         "INVALID_MODEL_RESPONSE",
         "The model returned an invalid recommendation. Your state is unchanged; please retry.",
@@ -88,9 +120,10 @@ export async function POST(httpRequest: Request) {
       );
     }
     if (error instanceof RecommendationProviderError) {
+      if (diagnostics) diagnostics.failureClassification = error.classification;
       const notConfigured = error.message.includes("not configured") || error.message.includes("fake recommendation");
       console.error("Mayhem recommendation provider error", { classification: error.classification });
-      return failure(
+      return diagnosticFailure(
         notConfigured ? 503 : 502,
         notConfigured ? "NOT_CONFIGURED" : "PROVIDER_ERROR",
         error.message,
@@ -98,8 +131,9 @@ export async function POST(httpRequest: Request) {
     }
 
     // SDK errors can carry request headers/body. Never log the raw exception or game state.
+    if (diagnostics) diagnostics.failureClassification = "unexpected-error";
     console.error("Mayhem recommendation request failed", { classification: "unexpected-error" });
-    return failure(502, "PROVIDER_ERROR", "The recommendation provider request failed. Please retry.");
+    return diagnosticFailure(502, "PROVIDER_ERROR", "The recommendation provider request failed. Please retry.");
   }
 }
 

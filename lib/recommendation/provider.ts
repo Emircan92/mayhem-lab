@@ -124,6 +124,7 @@ export type ProviderCompletionEvent = {
   errorDiagnostic?: ProviderErrorDiagnostic;
 };
 type ProviderOptions = {
+  diagnostic?: (event: ProviderCompletionEvent) => void;
   itemMaxOutputTokens?: number | string;
   complete?: CompletionRunner;
   log?: (event: ProviderCompletionEvent) => void;
@@ -152,12 +153,14 @@ export class OpenAIRecommendationProvider implements RecommendationProvider {
   private readonly complete: CompletionRunner;
   private readonly log: (event: ProviderCompletionEvent) => void;
   private readonly itemBudget: string | number | undefined;
+  private readonly diagnostic?: (event: ProviderCompletionEvent) => void;
 
   constructor(apiKey: string, model: string, options: ProviderOptions = {}) {
     const client = new OpenAI({ apiKey });
     this.complete = options.complete ?? ((parameters, requestOptions) => client.responses.parse(parameters, requestOptions));
     this.log = options.log ?? ((event) => console.info("Mayhem provider completion", event.errorDiagnostic ? JSON.stringify(event) : event));
     this.itemBudget = options.itemMaxOutputTokens ?? process.env.MAYHEM_ITEM_MAX_OUTPUT_TOKENS;
+    this.diagnostic = options.diagnostic;
     this.metadata = { provider: "openai", model };
   }
 
@@ -186,7 +189,7 @@ export class OpenAIRecommendationProvider implements RecommendationProvider {
           : error instanceof SyntaxError || error instanceof ZodError ? "invalid-structured-output" : "provider-request";
       }
       const reason = response?.incomplete_details?.reason;
-      this.log({
+      const event: ProviderCompletionEvent = {
         event: "mayhem-recommendation-provider", kind: request.kind, model: this.metadata.model,
         attempt, maxOutputTokens: budget,
         status: ["completed", "incomplete", "failed", "cancelled", "queued", "in_progress"].includes(response?.status ?? "")
@@ -198,7 +201,10 @@ export class OpenAIRecommendationProvider implements RecommendationProvider {
         cachedInputTokens: tokenCount(response?.usage?.input_tokens_details?.cached_tokens),
         totalTokens: tokenCount(response?.usage?.total_tokens), elapsedMs: Date.now() - started,
         ...(errorDiagnostic ? { errorDiagnostic } : {}),
-      });
+      };
+      this.log(event);
+      // Recording must never affect provider completion or retry behavior.
+      try { this.diagnostic?.(event); } catch { /* best-effort local evidence */ }
       if (classification === null) return response!.output_parsed;
       if (attempt < attempts && (classification === "token-exhaustion" || classification === "incomplete-output")) continue;
       throw new RecommendationProviderError(
@@ -240,7 +246,7 @@ export class FakeRecommendationProvider implements RecommendationProvider {
   }
 }
 
-export function configuredRecommendationProvider(): RecommendationProvider {
+export function configuredRecommendationProvider(diagnostic?: (event: ProviderCompletionEvent) => void): RecommendationProvider {
   if (process.env.MAYHEM_RECOMMENDATION_PROVIDER === "fake") {
     if (process.env.NODE_ENV === "production") {
       throw new RecommendationProviderError("The fake recommendation provider is disabled in production.");
@@ -255,6 +261,6 @@ export function configuredRecommendationProvider(): RecommendationProvider {
       "Recommendation provider is not configured. Set OPENAI_API_KEY and OPENAI_MODEL.",
     );
   }
-  return new OpenAIRecommendationProvider(apiKey, model);
+  return new OpenAIRecommendationProvider(apiKey, model, { diagnostic });
 }
 

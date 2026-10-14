@@ -7,6 +7,7 @@ type SyncState = LiveSession & {
   enabled: boolean;
   status: "connected" | "stale" | "waiting" | "unavailable";
   message: string;
+  diagnostic?: import("@/lib/diagnostics/schema").LiveDiagnostic;
 };
 
 const initial: SyncState = { enabled: false, snapshot: null, candidate: null, status: "waiting", message: "Waiting for a running Mayhem game." };
@@ -42,6 +43,7 @@ export function useLiveSync() {
         if (response.ok && result.ok) {
           const session = receiveLiveSnapshot(current.current, result.snapshot);
           return update({ ...current.current, ...session,
+            diagnostic: undefined,
             status: session.candidate ? "waiting" : "connected",
             message: session.candidate
               ? "Confirm that this is your current ARAM Mayhem game before attaching live data."
@@ -49,12 +51,14 @@ export function useLiveSync() {
           });
         }
         return update({ ...current.current,
+          diagnostic: result.ok ? undefined : result.diagnostic,
           status: current.current.snapshot ? "stale" : result.ok ? "unavailable" : result.status,
           message: result.ok ? "The local Live Sync endpoint is unavailable." : result.message,
         });
       } catch {
         if (generation.current !== epoch || !mounted.current) return current.current;
         return update({ ...current.current, status: current.current.snapshot ? "stale" : "unavailable",
+          diagnostic: { category: "network" },
           message: "Live Sync could not refresh. Retry or disable it to use manual entry.",
         });
       } finally {
