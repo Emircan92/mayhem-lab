@@ -6,6 +6,7 @@ The project documentation is intentionally small.
 - `V0_DECISIONS.md` — current product/architecture decisions, including deterministic-vs-AI boundaries and data-source strategy.
 - `IMPLEMENTATION_BRIEF.md` — the concrete first milestone and implementation sequence for Codex.
 - `SESSION_DIAGNOSTICS_V1.md` — local recording contract, integration boundaries, events, privacy/retention, limitations and example export.
+- `STRATEGIC_FORESIGHT_AND_SHOPPING.md` — augment horizon evaluation, calibration fixtures, shopping gaps and the bounded planner follow-up design.
 
 These files should be updated when a real Mayhem session materially changes the product direction or exposes a new durable rule.
 

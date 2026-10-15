@@ -22,6 +22,21 @@ Rules:
 - Keep reasons concise and immediately useful during a live game.
 - Return at most two alternatives. Use warnings for decision-relevant uncertainty only.`;
 
+// Augment-only guidance: preserve the item task and the validated response shape.
+// These are evaluation questions, not predictions or champion-specific rankings.
+const AUGMENT_EVALUATION = {
+  horizons: {
+    immediate: "Compare power with current items and reported stats; missing stats are unknown, not zero.",
+    midgame: "Compare value if the next plausible purchases support the current or candidate-enabled build direction.",
+    lateGame: "Compare plausible late-game scaling conditionally. ARAM Mayhem can allow scaling builds, but remaining game duration and a full build are not guaranteed.",
+  },
+  buildDirection: "Consider build-defining synergy with owned augments and items, and how each choice changes future itemization. Do not assume future purchases or unoffered augments are owned or guaranteed.",
+  practicalValue: "Distinguish general, ultimate-only and basic-only ability haste, resets and temporary post-ultimate windows. Compare ultimate uptime separately from basic-ability throughput. Evaluate which supplied abilities drive meaningful damage or utility, and whether their cast cadence, toggles, channels, resources or access to enemies limit the benefit. More nominal haste or stats need not yield proportional practical output; consider existing haste and diminishing practical returns.",
+  opportunityCost: "Compare the opportunity cost of passing a build-enabling scaling augment now with the risk that it comes online too late. Do not dismiss scaling solely because its relevant stat is currently low or zero, or prefer it solely for a hypothetical maximum.",
+  grounding: "Separate factual scaling in supplied descriptions from conditional assumptions about future stats and fight opportunities. Do not invent future stat totals, exact cooldowns, breakpoints, haste stacking rules or missing numerical augment effects. If the kit omits ability timing or scaling details, make the practical benefit conditional and acknowledge decision-relevant uncertainty; no full-build simulation is required.",
+  response: "In the existing primary reason and buildDirection, summarize the decisive now-versus-later tradeoff and the build assumption that supports it. Use an alternative's preferWhen for the condition that could reverse the choice. Keep this concise; do not output an exhaustive analysis of every horizon.",
+};
+
 export function buildRecommendationPrompt(request: RecommendationRequest): RecommendationPrompt {
   const {
     facts: deterministicFacts,
@@ -34,6 +49,7 @@ export function buildRecommendationPrompt(request: RecommendationRequest): Recom
         objective: "Choose the best currently offered augment.",
         candidatePolicy: "Only IDs in candidateAugmentIds are legal choices.",
         candidates: request.snapshot.offeredAugments.filter((candidate) => candidate !== null),
+        evaluation: AUGMENT_EVALUATION,
       }
     : {
         objective: "Recommend the next completed item.",

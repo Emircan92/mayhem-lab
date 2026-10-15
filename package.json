@@ -6,6 +6,7 @@
   "scripts": {
     "data:refresh": "node scripts/refresh-data.mjs",
     "calibrate:volibear": "node scripts/run-calibration.mjs data/calibration/volibear-dropkick.json",
+    "calibrate:foresight": "tsx scripts/run-foresight-calibration.ts",
     "measure:item-payload": "tsx scripts/measure-item-payload.ts",
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",

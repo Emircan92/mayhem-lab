@@ -80,7 +80,7 @@ pnpm calibrate:volibear
 
 This posts the preserved `Volibear / Courage of the Colossus / Dropkick / Clown College` state from `data/calibration/volibear-dropkick.json` to the local recommendation endpoint. It prints the validated recommendation and request-size measurements; it does not assert which augment must win. Set `MAYHEM_CALIBRATION_URL` to target a different local endpoint.
 
-For offline item payload measurements using the same preserved state, run `pnpm measure:item-payload` (or pass another existing fixture path). This reconstructs the original completed-item filter and provider input, then compares them with the mode-aware filter and current provider parameters. It makes no model/API call, retains full descriptions, and prints only aggregate sizes. The Volibear fixture supplies game state for size measurement; it is not an item-choice quality calibration. No Rumble, Garen, or Karthus calibration states are bundled.
+For offline item payload measurements using the same preserved state, run `pnpm measure:item-payload` (or pass another existing fixture path). This reconstructs the original completed-item filter and provider input, then compares them with the mode-aware filter and current provider parameters. It makes no model/API call, retains full descriptions, and prints only aggregate sizes. The Volibear fixture supplies game state for size measurement; it is not an item-choice quality calibration. No Rumble or Garen calibration states are bundled.
 
 Pinned 16.19.1 results, in UTF-8 bytes (JSON bodies, excluding HTTP headers):
 
@@ -93,3 +93,11 @@ Pinned 16.19.1 results, in UTF-8 bytes (JSON bodies, excluding HTTP headers):
 | Provider JSON body, including instructions and strict response schema | 96,890 | 57,269 |
 
 These measurements use the example model name and default budgets. They are byte counts, not estimated model tokens. Live model quality, latency, and sufficient reasoning budget still require real-game calibration; the offline suite verifies retry bounds, strict validation, and eligibility behavior.
+
+## Strategic foresight calibration
+
+Augment reasoning now compares immediate, midgame and conditional late-game value, build direction, practical ability-haste benefit and the risk of a delayed payoff. It preserves the existing response/candidate contract and provider settings. Four [calibration fixtures](data/calibration/strategic-foresight.json) cover zero-AP Karthus, established AP/high haste, physical Vayne and missing stats/details. Authored examples illustrate the tradeoffs; they are not observed model outputs or required winners.
+
+Run `pnpm calibrate:foresight` for offline prompt/example inspection. With the local app running, explicitly run `pnpm calibrate:foresight --live karthus-zero-ap` for one model-backed request and correlated timing/token diagnostics. Review the fixture criteria manually; deterministic tests cannot establish reasoning quality.
+
+Gold-aware shopping plans are deferred: current snapshots lack verified checkout recipes/costs and item-group limits needed for safe sequential purchase validation. See [scope, limitations and concrete planner design](docs/STRATEGIC_FORESIGHT_AND_SHOPPING.md). The existing next-item action remains unchanged.

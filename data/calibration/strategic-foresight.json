@@ -1,0 +1,190 @@
+{
+  "name": "Strategic foresight calibration",
+  "patch": "16.19.1",
+  "purpose": "Review reasoning, not a required winning ID. Examples are authored illustrations, not observed model outputs. Scenario labels and review criteria are not sent to the model.",
+  "cases": [
+    {
+      "id": "karthus-zero-ap",
+      "name": "Karthus with zero reported AP and no items",
+      "request": {
+        "kind": "augment",
+        "state": {
+          "championId": 30,
+          "ownedAugments": [],
+          "offeredAugments": [{ "augmentId": 1030 }, { "augmentId": 1349 }, null],
+          "itemIds": [],
+          "enemyChampionIds": [202, 84, 238, 112, 154],
+          "stats": { "abilityPower": 0, "abilityHaste": 0 }
+        }
+      },
+      "reviewCriteria": [
+        "Compare immediate Ultimate Awakening benefit with midgame and plausible late-game Eureka value if AP purchases follow; zero AP must not end the comparison.",
+        "Use the supplied 30% AP-to-haste relationship as fact, but do not invent a future AP total, guaranteed game length or exact Requiem cooldown.",
+        "Compare ultimate uptime separately from temporary post-R basic haste/reset value. Consider Q cadence and Defile's aura/resource pattern; missing Q cooldown means no quantified throughput claim.",
+        "Give a condition for preferring the alternative: immediate fights/earlier power versus time and commitment to AP itemization.",
+        "Do not invent Ultimate Awakening haste amounts, buff duration or internal cooldown; the pinned description omits these."
+      ],
+      "illustrativeResponse": {
+        "schemaVersion": 1,
+        "kind": "augment",
+        "primary": {
+          "id": 1030,
+          "name": "Eureka",
+          "reason": "Little immediate value at 0 AP, but if you commit to AP purchases its 30% conversion can support later Requiem uptime as well as basic spells. Passing it gives up that scaling direction."
+        },
+        "alternatives": [
+          {
+            "id": 1349,
+            "name": "Ultimate Awakening",
+            "reason": "Provides immediate ultimate haste and a post-R reset/window, though Defile's aura and mana drain limit what basic haste alone proves.",
+            "preferWhen": "You need earlier ultimate access and fight power before AP purchases can pay off."
+          }
+        ],
+        "buildDirection": "Favor AP itemization if taking Eureka; the payoff depends on reaching those purchases. For a repeated-Q pattern, assess actual cast cadence rather than treating basic haste as proportional damage.",
+        "warnings": ["The kit omits Q cooldown and the offered Ultimate Awakening description omits numerical haste/window values, so an exact cooldown or damage comparison is unavailable."],
+        "confidence": "medium"
+      }
+    },
+    {
+      "id": "karthus-established-ap",
+      "name": "Karthus with established AP scaling and high reported haste",
+      "request": {
+        "kind": "augment",
+        "state": {
+          "championId": 30,
+          "ownedAugments": [{ "augmentId": 1390 }, { "augmentId": 1205 }],
+          "offeredAugments": [{ "augmentId": 1030 }, { "augmentId": 1349 }, { "augmentId": 1084 }],
+          "itemIds": [3089, 3118, 3020],
+          "enemyChampionIds": [202, 84, 238, 112, 154],
+          "stats": { "abilityPower": 600, "abilityHaste": 200 }
+        }
+      },
+      "reviewCriteria": [
+        "Recognize owned Phenomenal Evil and ADAPt, existing AP items, and 600 reported AP as established synergy; do not assume future stacks or double-count item AP on top of reported AP.",
+        "Eureka's stated conversion at the reported AP is 180 nominal haste; compare practical marginal benefit with already high reported haste rather than promising proportional DPS.",
+        "Compare ultimate uptime, post-R basic windows and penetration as separate benefits; enemy MR and cooldown timings are unknown.",
+        "Either haste choice or penetration may win with a conditional explanation; no winning ID is prescribed."
+      ],
+      "illustrativeResponse": {
+        "schemaVersion": 1,
+        "kind": "augment",
+        "primary": {
+          "id": 1084,
+          "name": "Thread the Needle",
+          "reason": "With 200 reported haste, penetration is a plausible immediate way to improve damage per hit while your owned AP scaling continues. Its value still depends on enemy defenses, which are not reported."
+        },
+        "alternatives": [
+          {
+            "id": 1030,
+            "name": "Eureka",
+            "reason": "600 reported AP implies 180 nominal haste from the stated conversion, with further conditional upside from AP growth; that is not a proportional damage increase.",
+            "preferWhen": "More Requiem and useful spell opportunities matter more than damage per cast."
+          },
+          {
+            "id": 1349,
+            "name": "Ultimate Awakening",
+            "reason": "Offers ultimate haste and a post-R basic reset/window, but the snapshot cannot establish the numerical advantage over Eureka.",
+            "preferWhen": "The immediate post-R reset/window is especially useful in your fights."
+          }
+        ],
+        "buildDirection": "Continue the established AP direction; do not add owned item AP again to reported AP or assume future Phenomenal Evil stacks.",
+        "warnings": ["Enemy MR, ability cooldowns and Ultimate Awakening numerical values are absent; this is a conditional tradeoff."],
+        "confidence": "medium"
+      }
+    },
+    {
+      "id": "vayne-physical-direction",
+      "name": "Vayne with six physical/attack items and zero reported AP",
+      "request": {
+        "kind": "augment",
+        "state": {
+          "championId": 67,
+          "ownedAugments": [{ "augmentId": 1138 }],
+          "offeredAugments": [{ "augmentId": 1030 }, { "augmentId": 1349 }, { "augmentId": 1084 }],
+          "itemIds": [3153, 6672, 3031, 3085, 3036, 3006],
+          "enemyChampionIds": [202, 84, 238, 112, 154],
+          "stats": { "abilityPower": 0, "attackDamage": 320, "attackSpeed": 2, "critChance": 100, "abilityHaste": 20 }
+        }
+      },
+      "reviewCriteria": [
+        "Do not apply the Karthus example as a universal Eureka ranking; the owned physical build gives no established future AP direction.",
+        "Compare Final Hour and Tumble's supplied interaction with post-R basics rather than assuming all damage scales with haste.",
+        "Respect the crit-cap constraint and avoid assuming an imminent end solely from six occupied slots; remaining game duration is unknown.",
+        "An AP pivot remains hypothetical, with substantial build opportunity cost; do not assert replacement purchases are already planned."
+      ],
+      "illustrativeResponse": {
+        "schemaVersion": 1,
+        "kind": "augment",
+        "primary": {
+          "id": 1349,
+          "name": "Ultimate Awakening",
+          "reason": "Immediate ultimate haste and a post-R basic window plausibly support Final Hour and Tumble in the existing attack build. Eureka offers little at 0 AP and would need an unsupported AP pivot."
+        },
+        "alternatives": [
+          {
+            "id": 1084,
+            "name": "Thread the Needle",
+            "reason": "Armor penetration can help physical hits, but does not increase Silver Bolts' stated true damage.",
+            "preferWhen": "Physical damage per hit against enemy defenses matters more than ultimate access or the post-R window."
+          },
+          {
+            "id": 1030,
+            "name": "Eureka",
+            "reason": "AP-to-haste scaling is real, but this inventory and owned augment do not establish AP growth.",
+            "preferWhen": "A deliberate AP build pivot becomes worthwhile despite the cost of changing the current direction."
+          }
+        ],
+        "buildDirection": "Support the established attack build; capped crit has no intrinsic benefit and extra nominal basic haste does not imply proportional attack damage.",
+        "warnings": ["Ultimate Awakening amounts and timings are absent, so the practical gain remains conditional."],
+        "confidence": "medium"
+      }
+    },
+    {
+      "id": "karthus-unknown-stats",
+      "name": "Karthus with unknown AP/haste and an unresolved flat-AP offer",
+      "request": {
+        "kind": "augment",
+        "state": {
+          "championId": 30,
+          "ownedAugments": [],
+          "offeredAugments": [{ "augmentId": 1030 }, { "augmentId": 1349 }, { "augmentId": 1097 }],
+          "itemIds": [1026],
+          "enemyChampionIds": [202, 84, 238, 112, 154],
+          "stats": {}
+        }
+      },
+      "reviewCriteria": [
+        "Missing AP and haste are unknown, not zero; an owned AP item supports direction but does not prove total current AP.",
+        "Compare future AP growth with immediate ultimate access conditionally; do not calculate exact current haste gain from incomplete stats.",
+        "Keep the existing missing-description-detail warning for Witchful Thinking; do not invent its unresolved AP amount.",
+        "Retain legal candidates and situational alternatives even when numerical certainty is low."
+      ],
+      "illustrativeResponse": {
+        "schemaVersion": 1,
+        "kind": "augment",
+        "primary": {
+          "id": 1030,
+          "name": "Eureka",
+          "reason": "Blasting Wand supports an AP direction, so Eureka's AP-to-haste conversion may pay off now and as AP grows. Your total current AP is unknown, and the later payoff depends on continued AP purchases."
+        },
+        "alternatives": [
+          {
+            "id": 1349,
+            "name": "Ultimate Awakening",
+            "reason": "Offers immediate ultimate haste without needing AP growth, plus a conditional post-R basic window.",
+            "preferWhen": "Earlier ultimate access matters more than the uncertain AP-scaling payoff."
+          },
+          {
+            "id": 1097,
+            "name": "Witchful Thinking",
+            "reason": "Flat AP could improve the AP direction, but the supplied amount is unresolved.",
+            "preferWhen": "The in-game AP amount is known and direct spell power is the priority."
+          }
+        ],
+        "buildDirection": "Continue AP itemization if taking Eureka; compare Requiem access separately from Q cadence and Defile's mana-limited aura.",
+        "warnings": ["Current AP/haste, Q cooldown and Ultimate Awakening values are unavailable; Witchful Thinking's AP amount is unresolved."],
+        "confidence": "low"
+      }
+    }
+  ]
+}
