@@ -23,12 +23,21 @@ export function isLiveFresh(snapshot: LiveSnapshot | null, now: number): snapsho
   return snapshot !== null && now >= snapshot.observedAt && now - snapshot.observedAt < LIVE_STALE_MS;
 }
 
-export function sameLiveGame(previous: LiveSnapshot, next: LiveSnapshot): boolean {
+export type AttachmentReason = "initial-attachment" | "participants-changed" | "local-champion-changed" | "metadata-changed" | "clock-discontinuity";
+
+export function liveAttachmentMismatch(previous: LiveSnapshot | null, next: LiveSnapshot): AttachmentReason | null {
+  if (!previous) return "initial-attachment";
+  if (previous.championId !== next.championId) return "local-champion-changed";
+  if (previous.mapNumber !== next.mapNumber || previous.gameMode !== next.gameMode) return "metadata-changed";
+  if (previous.sessionKey !== next.sessionKey) return "participants-changed";
   const wallElapsed = (next.observedAt - previous.observedAt) / 1000;
   const gameElapsed = next.gameTime - previous.gameTime;
-  return previous.sessionKey === next.sessionKey && previous.mapNumber === next.mapNumber &&
-    previous.gameMode === next.gameMode && wallElapsed >= 0 && gameElapsed >= -3 &&
-    Math.abs(gameElapsed - wallElapsed) <= 60;
+  return wallElapsed >= 0 && gameElapsed >= -3 && Math.abs(gameElapsed - wallElapsed) <= 60
+    ? null : "clock-discontinuity";
+}
+
+export function sameLiveGame(previous: LiveSnapshot, next: LiveSnapshot): boolean {
+  return liveAttachmentMismatch(previous, next) === null;
 }
 
 export type LiveSession = { snapshot: LiveSnapshot | null; candidate: LiveSnapshot | null };

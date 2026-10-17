@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
 import { SessionRecorder, RECORDING_KEY, LIMITS } from "../lib/diagnostics/recorder";
-import { attemptSchema, bundleSchema, requestEvidenceSchema, type ServerDiagnostics } from "../lib/diagnostics/schema";
+import { attemptSchema, bundleSchema, eventSchema, requestEvidenceSchema, type ServerDiagnostics } from "../lib/diagnostics/schema";
 import { createEmptyGameState, recordOfferedAugment, type ManualGameState } from "../lib/game-state";
 import { normalizeLiveState, LiveDataError } from "../lib/live-client/normalize";
 import { createRecommendationRequest } from "../lib/recommendation/service";
@@ -129,6 +129,40 @@ test("live polls filter time/noise, retain material changes and deduplicate fail
   assert.equal(r.exportBundle()!.summary.liveFailures, 1);
   assert.equal(r.exportBundle()!.events.at(-1)!.data.blocked, "existing-attachment-stale");
   assert.doesNotMatch(JSON.stringify(r.exportBundle()), /PRIVATE|sessionKey/); r.discard();
+});
+
+test("V1 optional lifecycle evidence preserves legacy bundles and readers, with strict allowlists", () => {
+  const h = harness(), r = h.recorder; r.start(state, data);
+  const legacy = r.exportBundle()!;
+  assert.equal(bundleSchema.parse(legacy).schemaVersion, 1);
+  assert.equal(legacy.events[0].data.lifecycle, undefined);
+  const accepted = r.requested("item")!;
+  r.completed(accepted, completion(accepted), 200, 50);
+  r.disposition(accepted, "displayed", { phase: "response", freshness: "outdated", cause: "state-changed", fields: ["items"] });
+  const rejected = r.requested("augment")!;
+  r.completed(rejected, completion(rejected), 200, 50);
+  r.disposition(rejected, "stale", { phase: "response", freshness: "invalid", cause: "offer-changed", fields: ["offeredAugments"] });
+  const snapshot = normalizeLiveState(liveFixture(), catalog, 100_000);
+  const view = { enabled: true, attached: false, candidate: snapshot, snapshot: null, status: "waiting" as const,
+    attachmentReason: "initial-attachment" as const };
+  r.observeLive(view);
+  r.observeLive({ ...view, attached: true, candidate: null, snapshot, status: "connected" });
+  const b = r.exportBundle()!;
+  assert.equal(b.schemaVersion, 1); assert.equal(b.droppedEvents, 0);
+  assert.equal(b.summary.staleResults, 1);
+  assert.equal(b.events.find(e => e.requestId === accepted && e.type === "recommendation-displayed")!.data.lifecycle!.freshness, "outdated");
+  assert.deepEqual(b.events.filter(e => e.type === "live-transition").map(e => e.data.attachment?.action), ["confirmation-required", "confirmed"]);
+  // The preceding V1 reader projected these optional additions away.
+  const legacyEvent = eventSchema.extend({ data: eventSchema.shape.data.omit({ lifecycle: true, attachment: true }) });
+  for (const event of b.events) assert.ok(legacyEvent.safeParse(event).success);
+  const event = b.events.find(e => e.data.lifecycle)!;
+  const sanitized = eventSchema.parse({ ...event, data: { ...event.data,
+    lifecycle: { ...event.data.lifecycle, riotId: "PRIVATE#TAG", rawPayload: "PRIVATE" },
+    attachment: { action: "confirmed", cause: "participants-changed", riotId: "PRIVATE#TAG" },
+  } });
+  assert.doesNotMatch(JSON.stringify(sanitized), /PRIVATE|riotId|rawPayload/);
+  assert.equal(eventSchema.safeParse({ ...event, data: { lifecycle: { ...event.data.lifecycle, cause: "arbitrary-sensitive-text" } } }).success, false);
+  r.discard();
 });
 
 test("unknown local and enemy keys preserve exact case and role, with enemy-first failure unchanged", () => {

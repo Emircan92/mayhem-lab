@@ -12,7 +12,7 @@ import { requestEvidenceSchema } from "../lib/diagnostics/schema";
 import { recommendationApiInputSchema } from "../lib/recommendation/api-contract";
 import { buildRecommendationPrompt } from "../lib/recommendation/build-prompt";
 import { OpenAIRecommendationProvider, type RecommendationProvider } from "../lib/recommendation/provider";
-import { RecommendationRequestLifecycle, recommendationStateKey } from "../lib/recommendation/request-lifecycle";
+import { RecommendationRequestLifecycle, recommendationContext } from "../lib/recommendation/request-lifecycle";
 import { createRecommendationRequest, runRecommendation } from "../lib/recommendation/service";
 import { validateRecommendationResponse } from "../lib/recommendation/validate-response";
 
@@ -154,7 +154,7 @@ test("existing next-item task is unaffected by the augment-only evaluation", () 
   assert.equal(task.candidates.length, 105);
 });
 
-test("foresight results remain correlated in diagnostics V1 and stale after a material build edit", async () => {
+test("foresight results remain correlated in diagnostics V1 and display as outdated after a build edit", async () => {
   const { input, request } = prepare();
   const validated = validateRecommendationResponse(fixture.cases[0].illustrativeResponse, request);
   assert.ok(validated.ok);
@@ -162,22 +162,26 @@ test("foresight results remain correlated in diagnostics V1 and stale after a ma
   recorder.start(input.state, metadata);
   const id = recorder.requested("augment")!;
   recorder.submitted(id, input.state);
-  const key = (state = input.state) => recommendationStateKey(state, { enabled: false, snapshot: null, candidate: null });
+  const context = (state = input.state) => recommendationContext(state, { enabled: false, boundary: 0, status: "waiting", snapshot: null, candidate: null }, 0, 0, 100_000);
   const lifecycle = new RecommendationRequestLifecycle();
-  const token = lifecycle.start(key())!;
+  const token = lifecycle.start("augment", context())!;
+  lifecycle.submit(token, context(), input.state);
   recorder.completed(id, {
     ok: true, recommendation: validated.value,
     diagnostics: { requestId: id, outcome: "success", elapsedMs: 50, attempts: [], evidence: requestEvidenceSchema.parse(request) },
   }, 200, 75);
-  assert.equal(lifecycle.isCurrent(token, key({ ...input.state, itemIds: [1058] })), false);
-  recorder.disposition(id, "stale");
+  const freshness = lifecycle.assess(token, context({ ...input.state, itemIds: [1058] }));
+  assert.equal(freshness.status, "outdated");
+  recorder.disposition(id, "displayed", { phase: "response", freshness: freshness.status, cause: freshness.reason, fields: freshness.fields });
   lifecycle.finish(token);
   const bundle = recorder.exportBundle()!;
   assert.equal(bundle.schemaVersion, 1);
   assert.equal(bundle.recommendations[0].requestId, id);
   assert.deepEqual(bundle.recommendations[0].result, validated.value);
   assert.deepEqual(bundle.recommendations[0].candidateAugmentIds, [1030, 1349]);
-  assert.equal(bundle.summary.staleResults, 1);
+  assert.equal(bundle.summary.staleResults, 0);
+  assert.equal(bundle.recommendations[0].disposition, "displayed");
+  assert.equal(bundle.events.at(-1)!.data.lifecycle!.freshness, "outdated");
   assert.equal(bundle.droppedEvents, 0);
   recorder.discard();
 });

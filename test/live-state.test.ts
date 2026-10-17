@@ -3,7 +3,7 @@ import test from "node:test";
 import { createEmptyGameState, serializeGameState } from "../lib/game-state";
 import { normalizeLiveState } from "../lib/live-client/normalize";
 import { allowLiveRequest } from "../lib/live-client/access";
-import { isLiveFresh, LIVE_STALE_MS, liveRecommendationProblem, mergeLiveState, receiveLiveSnapshot, replaceOfferedAugment, sameLiveGame } from "../lib/live-state";
+import { isLiveFresh, LIVE_STALE_MS, liveAttachmentMismatch, liveRecommendationProblem, mergeLiveState, receiveLiveSnapshot, replaceOfferedAugment, sameLiveGame } from "../lib/live-state";
 
 const catalog = {
   champions: Array.from({ length: 10 }, (_, index) => ({ id: index + 1, key: index === 0 ? "MonkeyKing" : `Hero${index}` })),
@@ -138,6 +138,7 @@ test("first attachment and ambiguous game boundaries remain pending until explic
   assert.equal(sameLiveGame(previous, reconnect), true);
   assert.equal(receiveLiveSnapshot({ snapshot: previous, candidate: null }, reconnect).candidate, null);
   const boundaries = [
+    { ...reconnect, championId: 2 },
     { ...reconnect, gameTime: 0 }, { ...reconnect, sessionKey: "another-roster" },
     { ...reconnect, gameMode: "KIWI" }, { ...reconnect, observedAt: 1_000_000 },
   ];
@@ -148,6 +149,35 @@ test("first attachment and ambiguous game boundaries remain pending until explic
     assert.equal(pending.candidate, next);
     assert.equal(receiveLiveSnapshot(pending, reconnect).candidate, reconnect);
   }
+});
+
+test("possession-like enemy forms preserve participant identity and attachment without champion mappings", () => {
+  const input = fixture(), original = normalizeLiveState(input, catalog, 100_000);
+  let session = { snapshot: original, candidate: null } as import("../lib/live-state").LiveSession;
+  for (const [index, key] of ["Hero1", "Hero2", "MonkeyKing", "Hero9"].entries()) {
+    input.players[9].rawChampionName = `game_character_displayname_${key}`;
+    input.game.gameTime = 102 + index * 2;
+    const next = normalizeLiveState(input, catalog, 102_000 + index * 2_000);
+    assert.equal(next.sessionKey, original.sessionKey);
+    assert.equal(liveAttachmentMismatch(session.snapshot, next), null);
+    session = receiveLiveSnapshot(session, next);
+    assert.equal(session.candidate, null);
+    assert.equal(session.snapshot, next);
+  }
+});
+
+test("stable identity still detects participant/team, local champion, metadata and clock boundaries", () => {
+  const input = fixture(), original = snapshot();
+  input.players[9].riotId = "DifferentSynthetic#TAG";
+  assert.equal(liveAttachmentMismatch(original, normalizeLiveState(input, catalog, 100_001)), "participants-changed");
+  const teams = fixture();
+  teams.players[1].team = "ORDER";
+  teams.players[5].team = "CHAOS";
+  assert.equal(liveAttachmentMismatch(original, normalizeLiveState(teams, catalog, 100_001)), "participants-changed");
+  assert.equal(liveAttachmentMismatch(original, { ...original, championId: 2 }), "local-champion-changed");
+  assert.equal(liveAttachmentMismatch(original, { ...original, gameMode: "OTHER" }), "metadata-changed");
+  assert.equal(liveAttachmentMismatch(original, { ...original, observedAt: 110_000, gameTime: 0 }), "clock-discontinuity");
+  assert.equal(liveAttachmentMismatch(null, original), "initial-attachment");
 });
 
 test("local endpoint rejects cross-site, sibling-port, DNS rebinding and simple requests", () => {

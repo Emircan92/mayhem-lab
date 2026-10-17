@@ -27,7 +27,8 @@ import type { RecommendationResponse } from "@/lib/recommendation-contract";
 import { SearchSelect, type SearchOption } from "./SearchSelect";
 import { useLiveSync } from "./useLiveSync";
 import { isLiveFresh, LIVE_STALE_MS, liveRecommendationProblem, mergeLiveState, replaceOfferedAugment } from "@/lib/live-state";
-import { RecommendationRequestLifecycle, recommendationStateKey } from "@/lib/recommendation/request-lifecycle";
+import { RecommendationRequestLifecycle, augmentDecisionKey, recommendationContext, type Freshness, type RecommendationKind, type RequestToken } from "@/lib/recommendation/request-lifecycle";
+import { RecommendationResult } from "./RecommendationResult";
 import { SessionRecorder } from "@/lib/diagnostics/recorder";
 
 type GameStateComposerProps = {
@@ -56,12 +57,14 @@ const STAT_FIELDS: Array<{
   { key: "health", label: "Health", placeholder: "e.g. 3500" },
 ];
 
-type RecommendationUiState =
-  | { status: "idle" }
-  | { status: "outdated" }
-  | { status: "loading"; kind: "augment" | "item" }
-  | { status: "success"; recommendation: RecommendationResponse }
-  | { status: "error"; kind: "augment" | "item"; message: string };
+type RecommendationChannel = {
+  pending: boolean;
+  error?: string;
+  result?: { token: RequestToken; recommendation: RecommendationResponse; debug: RecommendationApiSuccess["debug"]; diagnosticRequestId?: string };
+};
+const emptyChannels = (): Record<RecommendationKind, RecommendationChannel> => ({ augment: { pending: false }, item: { pending: false } });
+const lifecycleDiagnostic = (freshness: Freshness, phase: "preflight" | "response" | "retained") =>
+  ({ phase, freshness: freshness.status, cause: freshness.reason, fields: freshness.fields });
 
 function AbilityContextPicker({
   value,
@@ -142,38 +145,33 @@ export function GameStateComposer({ champions, augments, items, patch, generated
   const recorderRef = useRef<SessionRecorder | null>(null);
   if (!recorderRef.current) recorderRef.current = new SessionRecorder({ changed: () => recordingChanged((n) => n + 1) });
   const recorder = recorderRef.current;
-  const displayRequestId = useRef<string | undefined>(undefined);
   const [manualState, setManualState] = useState<ManualGameState>(createEmptyGameState);
   const manualRef = useRef(manualState);
   const live = useLiveSync();
   const state = useMemo(() => mergeLiveState(manualState, live.snapshot, live.fresh, live.now),
     [manualState, live.snapshot, live.fresh, live.now]);
   const lifecycle = useRef(new RecommendationRequestLifecycle());
-  const materialKey = recommendationStateKey(manualState, live);
+  const gameEpoch = useRef(0);
+  const offerEpoch = useRef(0);
   const [hydrated, setHydrated] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [recommendationUi, setRecommendationUi] = useState<RecommendationUiState>({ status: "idle" });
-  const [recommendationDebug, setRecommendationDebug] = useState<RecommendationApiSuccess["debug"] | null>(null);
-  const [requestPending, setRequestPending] = useState(false);
+  const [channels, setChannels] = useState(emptyChannels);
 
-  function currentMaterialKey() {
-    return recommendationStateKey(manualRef.current, live.getCurrent());
+  function currentContext() {
+    return recommendationContext(manualRef.current, live.getCurrent(), gameEpoch.current, offerEpoch.current, Date.now());
   }
 
-  function invalidateRecommendation() {
-    setRecommendationUi((current) => current.status === "idle" ? current : { status: "outdated" });
-    setRecommendationDebug(null);
+  function updateChannel(kind: RecommendationKind, update: (current: RecommendationChannel) => RecommendationChannel) {
+    setChannels(current => ({ ...current, [kind]: update(current[kind]) }));
   }
 
   // Update the ref synchronously so back-to-back edits/picks cannot use old state.
   function setState(update: ManualGameState | ((current: ManualGameState) => ManualGameState)) {
     const next = typeof update === "function" ? update(manualRef.current) : update;
+    if (next.championId !== manualRef.current.championId) gameEpoch.current++;
+    if (augmentDecisionKey(next) !== augmentDecisionKey(manualRef.current)) offerEpoch.current++;
     recorder.observeManual(manualRef.current, next);
     manualRef.current = next;
-    if (lifecycle.current.observe(currentMaterialKey())) {
-      recorder.materialChangePending();
-      invalidateRecommendation();
-    }
     setManualState(next);
   }
 
@@ -217,17 +215,28 @@ export function GameStateComposer({ champions, augments, items, patch, generated
     window.localStorage.setItem(STORAGE_KEY, serializeGameState(manualState, patch));
   }, [hydrated, patch, manualState]);
 
-  useEffect(() => {
-    if (lifecycle.current.observe(materialKey)) {
-      recorder.materialChangePending();
-      invalidateRecommendation();
-    }
-  }, [materialKey]);
-
   useEffect(() => { recorder.observeLive(live); }, [live.enabled, live.attached, live.status, live.snapshot, live.candidate, live.diagnostic]);
+  const context = recommendationContext(manualState, live, gameEpoch.current, offerEpoch.current, live.now || Date.now());
+  const retainedDiagnostics = useRef<Partial<Record<RecommendationKind, { tokenId: number; key: string }>>>({});
   useEffect(() => {
-    if (recommendationUi.status === "success") recorder.disposition(displayRequestId.current, "displayed");
-  }, [recommendationUi]);
+    for (const kind of ["augment", "item"] as const) {
+      const result = channels[kind].result;
+      if (!result) continue;
+      const freshness = lifecycle.current.assess(result.token, currentContext(), true);
+      const detail = lifecycleDiagnostic(freshness, "retained");
+      const key = JSON.stringify(detail);
+      const previous = retainedDiagnostics.current[kind];
+      if (previous?.tokenId === result.token.id && previous.key === key) continue;
+      retainedDiagnostics.current[kind] = { tokenId: result.token.id, key };
+      if (previous?.tokenId !== result.token.id) {
+        // Count a result as displayed only after the UI commits it. A hard
+        // boundary between arrival and commit must still reject that result.
+        recorder.disposition(result.diagnosticRequestId, freshness.status === "invalid" ? "stale" : "displayed", lifecycleDiagnostic(freshness, "response"));
+        continue;
+      }
+      recorder.event("material-change-pending", { kind, lifecycle: detail }, result.diagnosticRequestId);
+    }
+  }, [channels, manualState, live.enabled, live.boundary, live.snapshot, live.candidate, live.status, live.now]);
   useEffect(() => {
     const save = () => recorder.flush();
     const visibility = () => { if (document.visibilityState === "hidden") save(); };
@@ -304,12 +313,19 @@ export function GameStateComposer({ champions, augments, items, patch, generated
     setState((current) => recordOfferedAugment(current, index));
   }
 
-  function recommendedPickAction(augmentId: number) {
+  function recommendedPickAction(augmentId: number, token: RequestToken) {
     const index = state.offeredAugments.findIndex((entry) => entry?.augmentId === augmentId);
     if (index < 0 || ownedIds.has(augmentId)) return null;
     return (
       <button className="secondary-button" type="button"
-        aria-label={`Record ${augmentById.get(augmentId)?.name} as owned`} onClick={() => recordPick(index)}>
+        aria-label={`Record ${augmentById.get(augmentId)?.name} as owned`} onClick={() => {
+          if (lifecycle.current.assess(token, currentContext(), true).status !== "current") {
+            setNotice("Advice is no longer current. Verify game state and request an update before recording this pick.");
+            return;
+          }
+          const currentIndex = manualRef.current.offeredAugments.findIndex(entry => entry?.augmentId === augmentId);
+          if (currentIndex >= 0) recordPick(currentIndex);
+        }}>
         Record this pick
       </button>
     );
@@ -319,40 +335,47 @@ export function GameStateComposer({ champions, augments, items, patch, generated
     if (hasGameState(state) && !window.confirm("Start a new game and clear the current state?")) return;
     window.localStorage.removeItem(STORAGE_KEY);
     recorder.newGame();
-    lifecycle.current.reset();
+    gameEpoch.current++;
     live.resetSession();
     setState(createEmptyGameState());
-    setRecommendationUi({ status: "idle" });
-    setRecommendationDebug(null);
+    setChannels(current => ({ augment: { pending: current.augment.pending }, item: { pending: current.item.pending } }));
+    retainedDiagnostics.current = {};
     setNotice("New game started. Current selections were cleared.");
   }
 
-  async function requestRecommendation(kind: "augment" | "item") {
+  async function requestRecommendation(kind: RecommendationKind) {
     // Acquire before any state update or await: React loading state is not a lock.
-    const token = lifecycle.current.start(currentMaterialKey());
+    const token = lifecycle.current.start(kind, currentContext());
     if (!token) { recorder.event("recommendation-overlap-prevented", { kind }); return; }
     const diagnosticRequestId = recorder.requested(kind);
     const requestStarted = Date.now();
-    setRequestPending(true);
-    setRecommendationUi({ status: "loading", kind });
-    setRecommendationDebug(null);
+    updateChannel(kind, current => ({ ...current, pending: true, error: undefined }));
     try {
       let requestState = manualRef.current;
-      if (live.enabled) {
+      if (live.getCurrent().enabled) {
         // Join any existing poll; never issue a second concurrent live request.
-        const latest = live.fresh && isLiveFresh(live.snapshot, Date.now()) ? live : await live.refresh();
-        if (!lifecycle.current.isCurrent(token, currentMaterialKey())) {
+        const observed = live.getCurrent();
+        if (observed.status !== "connected" || observed.candidate || !isLiveFresh(observed.snapshot, Date.now())) await live.refresh();
+        const latest = live.getCurrent();
+        const preflight = lifecycle.current.preflight(token, currentContext());
+        if (preflight.status === "invalid") {
           recorder.failed(diagnosticRequestId, "live-preflight", Date.now() - requestStarted);
-          recorder.disposition(diagnosticRequestId, "stale"); return;
+          recorder.disposition(diagnosticRequestId, "stale", lifecycleDiagnostic(preflight, "preflight")); return;
         }
         const attached = latest.enabled && latest.candidate === null && latest.status === "connected";
         const problem = liveRecommendationProblem(latest.snapshot, attached, Date.now());
         if (problem) {
-          recorder.failed(diagnosticRequestId, "live-preflight", Date.now() - requestStarted);
-          setRecommendationUi({ status: "error", kind, message: problem });
+          recorder.failed(diagnosticRequestId, "live-preflight", Date.now() - requestStarted,
+            { phase: "preflight", freshness: "invalid", cause: "preflight-unavailable", fields: ["liveAvailability"] });
+          updateChannel(kind, current => ({ ...current, error: problem }));
           return;
         }
         requestState = mergeLiveState(manualRef.current, latest.snapshot, true, Date.now());
+      }
+      const submitted = lifecycle.current.submit(token, currentContext(), requestState);
+      if (submitted.status === "invalid") {
+        recorder.failed(diagnosticRequestId, "live-preflight", Date.now() - requestStarted);
+        recorder.disposition(diagnosticRequestId, "stale", lifecycleDiagnostic(submitted, "preflight")); return;
       }
       recorder.submitted(diagnosticRequestId, requestState);
       const response = await fetch("/api/recommend", {
@@ -362,31 +385,26 @@ export function GameStateComposer({ champions, augments, items, patch, generated
       });
       const payload = (await response.json()) as RecommendationApiResponse;
       recorder.completed(diagnosticRequestId, payload, response.status, Date.now() - requestStarted);
-      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) {
-        recorder.disposition(diagnosticRequestId, "stale"); return;
+      const freshness = lifecycle.current.assess(token, currentContext());
+      if (freshness.status === "invalid") {
+        recorder.disposition(diagnosticRequestId, "stale", lifecycleDiagnostic(freshness, "response")); return;
       }
       if (!response.ok || !payload.ok) {
         const message = payload.ok ? "Recommendation failed." : payload.error.message;
-        setRecommendationUi({ status: "error", kind, message });
+        updateChannel(kind, current => ({ ...current, error: message }));
         return;
       }
-      setRecommendationDebug(payload.debug);
-      displayRequestId.current = diagnosticRequestId;
-      setRecommendationUi({ status: "success", recommendation: payload.recommendation });
+      updateChannel(kind, current => ({ ...current, error: undefined,
+        result: { token, recommendation: payload.recommendation, debug: payload.debug, diagnosticRequestId } }));
     } catch {
       recorder.failed(diagnosticRequestId, "network", Date.now() - requestStarted);
-      if (!lifecycle.current.isCurrent(token, currentMaterialKey())) {
-        recorder.disposition(diagnosticRequestId, "stale"); return;
+      const freshness = lifecycle.current.preflight(token, currentContext());
+      if (freshness.status === "invalid") {
+        recorder.disposition(diagnosticRequestId, "stale", lifecycleDiagnostic(freshness, "response")); return;
       }
-      setRecommendationUi({
-        status: "error",
-        kind,
-        message: "Could not reach the local recommendation endpoint. Check the dev server and retry.",
-      });
+      updateChannel(kind, current => ({ ...current, error: "Could not reach the local recommendation endpoint. Check the dev server and retry." }));
     } finally {
-      lifecycle.current.finish(token);
-      setRequestPending(false);
-      setRecommendationUi((current) => current.status === "loading" ? { status: "outdated" } : current);
+      if (lifecycle.current.finish(token)) updateChannel(kind, current => ({ ...current, pending: false }));
     }
   }
 
@@ -411,7 +429,7 @@ export function GameStateComposer({ champions, augments, items, patch, generated
       <section className="live-sync panel" aria-label="Local session diagnostics">
         <div className="live-sync-heading">
           <strong role="status">{recorder.active ? "● " : ""}{recorder.status}</strong>
-          {!recorder.hasRecording ? <button className="secondary-button" type="button" disabled={!hydrated || requestPending}
+          {!recorder.hasRecording ? <button className="secondary-button" type="button" disabled={!hydrated || channels.augment.pending || channels.item.pending}
             onClick={() => recorder.start(manualRef.current, { patch, generatedAt }, live)}>Start recording</button> : null}
           {recorder.active ? <button className="secondary-button" type="button" onClick={() => recorder.stop()}>Stop recording</button> : null}
           {recorder.hasRecording ? <>
@@ -713,87 +731,38 @@ export function GameStateComposer({ champions, augments, items, patch, generated
         <div className="action-buttons">
           <button
             type="button"
-            disabled={!hydrated || requestPending}
+            disabled={!hydrated || channels.augment.pending}
             onClick={() => requestRecommendation("augment")}
           >
-            {recommendationUi.status === "loading" && recommendationUi.kind === "augment"
+            {channels.augment.pending
               ? "Choosing…"
               : "Choose Augment"}
           </button>
           <button
             type="button"
-            disabled={!hydrated || requestPending}
+            disabled={!hydrated || channels.item.pending}
             onClick={() => requestRecommendation("item")}
           >
-            {recommendationUi.status === "loading" && recommendationUi.kind === "item"
+            {channels.item.pending
               ? "Thinking…"
               : "Recommend Next Item"}
           </button>
         </div>
       </footer>
 
-      {recommendationUi.status === "outdated" ? (
-        <p className="notice" role="status">
-          Game state changed. Request a new recommendation.
-          {requestPending ? " The previous request is still finishing." : ""}
-        </p>
-      ) : null}
-      {requestPending && recommendationUi.status === "idle" ? (
-        <p className="notice" role="status">The previous request is still finishing.</p>
-      ) : null}
-
-      {recommendationUi.status === "error" ? (
-        <section className="recommendation-error" role="alert">
-          <div>
-            <strong>Recommendation unavailable</strong>
-            <p>{recommendationUi.message}</p>
-          </div>
-          <button type="button" disabled={requestPending} onClick={() => requestRecommendation(recommendationUi.kind)}>
-            Retry
-          </button>
-        </section>
-      ) : null}
-
-      {recommendationUi.status === "success" ? (
-        <section className="recommendation-panel" aria-live="polite">
-          <div className="recommendation-title">
-            <div>
-              <span>{recommendationUi.recommendation.kind === "augment" ? "AUGMENT PICK" : "NEXT COMPLETED ITEM"}</span>
-              <h2>{recommendationUi.recommendation.primary.name}</h2>
-            </div>
-            <b className={`confidence confidence-${recommendationUi.recommendation.confidence}`}>
-              {recommendationUi.recommendation.confidence} confidence
-            </b>
-          </div>
-          <p className="primary-reason">{recommendationUi.recommendation.primary.reason}</p>
-          {recommendationUi.recommendation.kind === "augment"
-            ? recommendedPickAction(recommendationUi.recommendation.primary.id) : null}
-          {recommendationUi.recommendation.alternatives.length ? (
-            <div className="recommendation-alternatives">
-              {recommendationUi.recommendation.alternatives.map((alternative) => (
-                <article key={alternative.id}>
-                  <strong>{alternative.name}</strong>
-                  <p>{alternative.reason}</p>
-                  {alternative.preferWhen ? <small>Prefer when: {alternative.preferWhen}</small> : null}
-                  {recommendationUi.recommendation.kind === "augment" ? recommendedPickAction(alternative.id) : null}
-                </article>
-              ))}
-            </div>
-          ) : null}
-          {recommendationUi.recommendation.buildDirection ? (
-            <p className="build-direction">
-              <strong>Direction:</strong> {recommendationUi.recommendation.buildDirection}
-            </p>
-          ) : null}
-          {recommendationUi.recommendation.warnings.length ? (
-            <ul className="recommendation-warnings">
-              {recommendationUi.recommendation.warnings.map((warning, index) => (
-                <li key={`${warning}-${index}`}>{warning}</li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
-      ) : null}
+      {(["augment", "item"] as const).map(kind => {
+        const channel = channels[kind];
+        const result = channel.result;
+        return <div key={kind}>
+          {channel.pending ? <p className="notice" role="status">{kind === "augment" ? "Choosing augment…" : "Thinking about items…"} Previous advice remains available.</p> : null}
+          {channel.error ? <section className="recommendation-error" role="alert">
+            <div><strong>{kind === "augment" ? "Augment" : "Item"} recommendation unavailable</strong><p>{channel.error}</p></div>
+            <button type="button" disabled={channel.pending} onClick={() => requestRecommendation(kind)}>Retry</button>
+          </section> : null}
+          {result ? <RecommendationResult recommendation={result.recommendation}
+            freshness={lifecycle.current.assess(result.token, context, true)} pickAction={id => recommendedPickAction(id, result.token)} /> : null}
+        </div>;
+      })}
 
       <details className="debug-panel">
         <summary>
@@ -813,24 +782,15 @@ export function GameStateComposer({ champions, augments, items, patch, generated
             <pre data-testid="recommendation-snapshot">
               {JSON.stringify(snapshotResult.snapshot, null, 2)}
             </pre>
-            {recommendationDebug ? (
-              <>
-                <h3>
-                  Last model request · {recommendationDebug.provider.provider}/{recommendationDebug.provider.model}
-                </h3>
-                <pre data-testid="recommendation-request">
-                  {JSON.stringify(recommendationDebug.request, null, 2)}
-                </pre>
-              </>
-            ) : null}
-            {recommendationUi.status === "success" ? (
-              <>
+            {(["augment", "item"] as const).map(kind => {
+              const result = channels[kind].result;
+              return result ? <div key={kind}>
+                <h3>{kind === "augment" ? "Augment" : "Item"} · last model request · {result.debug.provider.provider}/{result.debug.provider.model}</h3>
+                <pre data-testid={kind + "-recommendation-request"}>{JSON.stringify(result.debug.request, null, 2)}</pre>
                 <h3>Validated structured recommendation</h3>
-                <pre data-testid="recommendation-response">
-                  {JSON.stringify(recommendationUi.recommendation, null, 2)}
-                </pre>
-              </>
-            ) : null}
+                <pre data-testid={kind + "-recommendation-response"}>{JSON.stringify(result.recommendation, null, 2)}</pre>
+              </div> : null;
+            })}
           </div>
         ) : (
           <div className="snapshot-error" role="alert">

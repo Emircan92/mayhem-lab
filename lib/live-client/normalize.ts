@@ -96,7 +96,8 @@ export function normalizeLiveState(
   }
   if (inventory.some((item) => !item.known)) warnings.push("Unknown inventory IDs require manual resolution before recommendations.");
   // Names are used only inside the server-side fingerprint, never returned or logged.
-  const roster = players.map((player, index) => [identities[index], player.rawChampionName, player.team]).sort();
+  // Champion forms are observations, not participant identity.
+  const roster = players.map((player, index) => [identities[index], player.team]).sort();
   const sessionKey = createHash("sha256").update(JSON.stringify([activeId ?? active.summonerName, roster, game.gameMode, game.mapNumber])).digest("hex");
   return { ...game, observedAt, sessionKey, championId: championId(local), enemyChampionIds, inventory, stats, warnings };
 }

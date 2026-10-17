@@ -101,6 +101,11 @@ export const eventSchema = z.object({ seq: num.int(), at: num, gameId: z.string(
     reason: z.enum(["user", "retention-limit", "storage-failure"]).optional(), status: z.enum(["disabled", "waiting", "connected", "stale", "unavailable"]).optional(),
     attached: z.boolean().optional(), pendingAttachment: z.boolean().optional(), blocked: z.enum(["initial-attachment", "existing-attachment-stale"]).optional(),
     diagnostic: liveDiagnosticSchema.optional(), warnings: texts.optional(),
+    attachment: z.object({ action: z.enum(["confirmation-required", "confirmed"]),
+      cause: z.enum(["initial-attachment", "participants-changed", "local-champion-changed", "metadata-changed", "clock-discontinuity"]) }).optional(),
+    lifecycle: z.object({ phase: z.enum(["preflight", "response", "retained"]), freshness: z.enum(["current", "outdated", "invalid"]),
+      cause: z.enum(["game-boundary", "offer-changed", "superseded", "not-submitted", "state-changed", "live-unverified", "preflight-unavailable"]).optional(),
+      fields: z.array(z.enum(["game", "items", "enemies", "ownedAugments", "offeredAugments", "stats", "liveAvailability"])).max(7) }).optional(),
     observedAt: num.optional(), gameTime: num.optional(), mapNumber: id.optional(), gameMode: text.optional(),
     inventory: z.array(z.object({ slot: id, itemId: id, count: num, known: z.boolean() })).max(6).optional(),
   }) });

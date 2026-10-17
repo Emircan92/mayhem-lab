@@ -1,5 +1,6 @@
 import type { ManualGameState } from "../game-state";
 import type { LiveSnapshot } from "../live-state";
+import type { AttachmentReason } from "../live-state";
 import { bundleSchema, eventSchema, liveDiagnosticSchema, recordingSchema, resultSchema, serverDiagnosticsSchema,
   stateSchema, type Recording, type RecordingEvent } from "./schema";
 
@@ -19,7 +20,7 @@ type Storage = Pick<globalThis.Storage, "getItem" | "setItem" | "removeItem">;
 type Options = { clock?: () => number; uuid?: () => string; changed?: () => void; storage?: Storage };
 type EventData = RecordingEvent["data"];
 type LiveView = { enabled: boolean; attached: boolean; status: "connected" | "stale" | "waiting" | "unavailable";
-  candidate: LiveSnapshot | null; snapshot: LiveSnapshot | null; diagnostic?: unknown };
+   candidate: LiveSnapshot | null; snapshot: LiveSnapshot | null; diagnostic?: unknown; attachmentReason?: AttachmentReason };
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -183,7 +184,11 @@ export class SessionRecorder {
     try {
       const transition = { status: view.enabled ? view.status : "disabled" as const, attached: view.attached, pendingAttachment: !!view.candidate };
       if (!same(transition, this.transition && JSON.parse(this.transition))) {
-        this.transition = JSON.stringify(transition); this.append("live-transition", "live-sync", transition);
+        this.transition = JSON.stringify(transition); this.append("live-transition", "live-sync", { ...transition,
+          ...(view.attachmentReason && (view.candidate || view.attached) ? { attachment: {
+            action: view.candidate ? "confirmation-required" as const : "confirmed" as const, cause: view.attachmentReason,
+          } } : {}),
+        });
       }
       if (view.diagnostic) {
         const diagnostic = liveDiagnosticSchema.parse(view.diagnostic);
@@ -275,19 +280,19 @@ export class SessionRecorder {
       this.event(success ? "recommendation-completed" : "recommendation-failed", { httpStatus, elapsedMs, ...(success ? {} : { category: category ?? "network" }) }, requestId);
     } catch { this.failed(requestId, "network", elapsedMs); }
   }
-  failed(requestId: string | undefined, category: "network" | "live-preflight", elapsedMs: number) {
+  failed(requestId: string | undefined, category: "network" | "live-preflight", elapsedMs: number, lifecycle?: EventData["lifecycle"]) {
     if (!this.active || !requestId) return;
     const r = this.recording!.recommendations.find((r) => r.requestId === requestId);
     if (!r || r.outcome !== "pending") return;
     Object.assign(r, { outcome: "failed", disposition: "not-displayed", category, completedAt: this.clock(), elapsedMs });
-    this.event("recommendation-failed", { category, elapsedMs }, requestId);
+    this.event("recommendation-failed", { category, elapsedMs, lifecycle }, requestId);
   }
-  disposition(requestId: string | undefined, value: "stale" | "displayed") {
+  disposition(requestId: string | undefined, value: "stale" | "displayed", lifecycle?: EventData["lifecycle"]) {
     if (!this.active || !requestId) return;
     const r = this.recording!.recommendations.find((r) => r.requestId === requestId);
     if (!r || r.disposition === value) return;
     r.disposition = value;
-    this.event(value === "stale" ? "recommendation-stale" : "recommendation-displayed", {}, requestId);
+    this.event(value === "stale" ? "recommendation-stale" : "recommendation-displayed", { lifecycle }, requestId);
   }
   exportBundle() {
     if (!this.recording) return null;

@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isLiveFresh, receiveLiveSnapshot, type LiveSession, type LiveStateResponse } from "@/lib/live-state";
+import { isLiveFresh, liveAttachmentMismatch, receiveLiveSnapshot, type AttachmentReason, type LiveSession, type LiveStateResponse } from "@/lib/live-state";
 
 type SyncState = LiveSession & {
   enabled: boolean;
+  boundary: number;
+  attachmentReason?: AttachmentReason;
   status: "connected" | "stale" | "waiting" | "unavailable";
   message: string;
   diagnostic?: import("@/lib/diagnostics/schema").LiveDiagnostic;
 };
 
-const initial: SyncState = { enabled: false, snapshot: null, candidate: null, status: "waiting", message: "Waiting for a running Mayhem game." };
+const initial: SyncState = { enabled: false, boundary: 0, snapshot: null, candidate: null, status: "waiting", message: "Waiting for a running Mayhem game." };
 
 export function useLiveSync() {
   const [sync, setSync] = useState<SyncState>(initial);
@@ -43,6 +45,10 @@ export function useLiveSync() {
         if (response.ok && result.ok) {
           const session = receiveLiveSnapshot(current.current, result.snapshot);
           return update({ ...current.current, ...session,
+            boundary: current.current.boundary + (session.candidate && !current.current.candidate ? 1 : 0),
+            attachmentReason: session.candidate
+              ? (current.current.candidate ? current.current.attachmentReason : liveAttachmentMismatch(current.current.snapshot, result.snapshot) ?? undefined)
+              : undefined,
             diagnostic: undefined,
             status: session.candidate ? "waiting" : "connected",
             message: session.candidate
@@ -63,7 +69,7 @@ export function useLiveSync() {
         });
       } finally {
         window.clearTimeout(timeout);
-        controller.current = null;
+        if (controller.current === abort) controller.current = null;
       }
     })();
     inFlight.current = task;
@@ -96,12 +102,14 @@ export function useLiveSync() {
   function setEnabled(enabled: boolean) {
     generation.current++;
     controller.current?.abort();
-    update({ ...initial, enabled });
+    inFlight.current = null;
+    update({ ...initial, enabled, boundary: current.current.boundary + 1 });
   }
   function resetSession() {
     generation.current++;
     controller.current?.abort();
-    update({ ...initial, enabled: current.current.enabled });
+    inFlight.current = null;
+    update({ ...initial, enabled: current.current.enabled, boundary: current.current.boundary + 1 });
   }
   function attach() {
     const candidate = current.current.candidate;
